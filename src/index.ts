@@ -1,3 +1,4 @@
+'use client';
 import { atom, type Getter, type Setter } from 'jotai/vanilla'
 import type {
   ChatRequest,
@@ -11,7 +12,7 @@ import type { CreateMessage, UseChatOptions } from 'ai/react'
 import type React from 'react'
 import { parseComplexResponse } from './parse-complex-response'
 
-export const COMPLEX_HEADER = 'X-Experimental-Stream-Data'
+const COMPLEX_HEADER = 'X-Experimental-Stream-Data'
 
 export function chatAtoms (
   chatOptions: Omit<
