@@ -19,7 +19,7 @@ export const nanoid = customAlphabet(
   7
 )
 
-export function chatAtom (
+export function chatAtoms (
   chatOptions: Omit<
     UseChatOptions,
     'onFinish' | 'onResponse' | 'onError' | 'experimental_onFunctionCall'
@@ -329,7 +329,7 @@ export function chatAtom (
 
   // user side atoms
   return {
-    messagesAtom: atom(get => get(messagesAtom)),
+    messagesAtom,
     inputAtom: atom(
       get => get(inputBaseAtom),
       (get, set, event: React.ChangeEvent<HTMLInputElement>) => {
