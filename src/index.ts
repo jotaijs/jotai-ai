@@ -7,12 +7,10 @@ import type {
   JSONValue,
   Message
 } from 'ai'
-import { createChunkDecoder, nanoid } from 'ai'
+import { createChunkDecoder, nanoid, COMPLEX_HEADER } from 'ai'
 import type { CreateMessage, UseChatOptions } from 'ai/react'
 import type React from 'react'
 import { parseComplexResponse } from './parse-complex-response'
-
-const COMPLEX_HEADER = 'X-Experimental-Stream-Data'
 
 const isPromiseLike = (value: unknown): value is PromiseLike<unknown> => {
   return (
