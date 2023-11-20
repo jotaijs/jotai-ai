@@ -63,8 +63,9 @@ export function chatAtoms (
     body: chatOptions.body
   })
 
-  const appendMessage = (set: Setter, message: Message) => {
-    set(messagesAtom, prevMessages => [...prevMessages, message])
+  const appendMessage = (
+    set: Setter, prevMessages: Message[], message: Message) => {
+    set(messagesAtom, [...prevMessages, message])
   }
 
   async function callApi (
@@ -72,6 +73,7 @@ export function chatAtoms (
     set: Setter,
     abortController: AbortController,
     metadata: Metadata,
+    prevMessages: Message[],
     chatRequest: Omit<ChatRequest, 'messages'> & {
       messages: Omit<Message, 'id'>[];
     }
@@ -149,7 +151,7 @@ export function chatAtoms (
           responseMessage['content'] = streamedResponse
         }
 
-        appendMessage(set, { ...responseMessage })
+        appendMessage(set, prevMessages, { ...responseMessage })
 
         // The request has been aborted, stop reading the stream.
         if (abortController.signal.aborted) {
@@ -165,7 +167,7 @@ export function chatAtoms (
 
         responseMessage['function_call'] = parsedFunctionCall
 
-        appendMessage(set, { ...responseMessage })
+        appendMessage(set, prevMessages, { ...responseMessage })
       }
 
       if (chatOptions.onFinish) {
@@ -199,6 +201,7 @@ export function chatAtoms (
       set,
       get(abortControllerAtom),
       get(metadataAtom),
+      get(messagesAtom),
       {
         ...chatRequest,
         messages: constructedMessagesPayload
