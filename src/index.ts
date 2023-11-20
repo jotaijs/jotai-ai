@@ -12,14 +12,14 @@ import { customAlphabet } from 'nanoid/non-secure'
 import { parseComplexResponse } from './parse-complex-response'
 import { createChunkDecoder } from 'ai'
 
-export const COMPLEX_HEADER = 'X-Experimental-Stream-Data'
+const COMPLEX_HEADER = 'X-Experimental-Stream-Data'
 
-export const nanoid = customAlphabet(
+const nanoid = customAlphabet(
   '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
   7
 )
 
-export function chatAtom (
+export function chatAtoms (
   chatOptions: Omit<
     UseChatOptions,
     'onFinish' | 'onResponse' | 'onError' | 'experimental_onFunctionCall'

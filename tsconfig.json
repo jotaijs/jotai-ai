@@ -4,9 +4,19 @@
     "strictNullChecks": true,
     "module": "ESNext",
     "target": "ES2018",
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "paths": {
+      "jotai-ai": [
+        "./src/index.ts"
+      ]
+    }
   },
   "exclude": [
     "node_modules"
+  ],
+  "references": [
+    {
+      "path": "./examples/next-openai-app"
+    }
   ]
 }
