@@ -330,6 +330,7 @@ export function chatAtoms (
   // user side atoms
   return {
     messagesAtom,
+    isLoadingAtom: atom(get => get(isLoadingAtom)),
     inputAtom: atom(
       get => get(inputBaseAtom),
       (get, set, event: React.ChangeEvent<HTMLInputElement>) => {
