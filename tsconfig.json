@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "strictNullChecks": true,
+    "module": "ESNext",
+    "target": "ES2018",
+    "moduleResolution": "bundler"
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}

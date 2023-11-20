@@ -1,0 +1,26 @@
+{
+  "name": "jotai-ai",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ai",
+    "openai",
+    "jotai"
+  ],
+  "author": "himself65 <himself65@outlook.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/react": "^18.2.37",
+    "ai": "^2.2.24",
+    "jotai": "^2.5.1",
+    "react": "^18.2.0",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "nanoid": "^5.0.3"
+  }
+}
