@@ -6,6 +6,7 @@ import { atomEffect } from 'jotai-effect'
 import { ChatInput, ChatMessages } from './ui/chat'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { Suspense } from 'react'
+import { atom } from 'jotai/vanilla'
 
 const {
   messagesAtom,
@@ -21,6 +22,11 @@ const {
     return (await idb.get('messages')) ?? []
   }
 })
+
+const clearMessagesAtom = atom(
+  null,
+  async (get, set) => set(messagesAtom, [])
+)
 
 const saveMessagesEffectAtom = atomEffect((get, set) => {
   const messages = get(messagesAtom)
@@ -40,12 +46,14 @@ const saveMessagesEffectAtom = atomEffect((get, set) => {
 const Messages = () => {
   const messages = useAtomValue(messagesAtom)
   const isLoading = useAtomValue(isLoadingAtom)
+  const clear = useSetAtom(clearMessagesAtom)
   const reload = useSetAtom(reloadAtom)
   const stop = useSetAtom(stopAtom)
   return (
     <ChatMessages
       messages={messages}
       isLoading={isLoading}
+      clear={clear}
       reload={reload}
       stop={stop}
     />

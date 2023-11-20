@@ -6,7 +6,7 @@ with [Vercel AI SDK](https://sdk.vercel.ai/docs).
 ## install
 
 ```
-yarn add jotai-ai
+yarn add ai jotai-ai
 ```
 
 ## chatAtoms
@@ -77,10 +77,28 @@ They actually have the different behaviors in the different frameworks.
 `chatAtoms` provider a more flexible way to create the chatbot, which is based on `jotai` atoms, so you can use it in
 framework-agnostic way.
 
+For example, you can extend the messagesAtom to add more features like `clearMessagesAtom`:
+
+```js
+const { messagesAtom } = chatAtoms()
+
+const clearMessagesAtom = atom(
+  null,
+  async (get, set) => set(messagesAtom, [])
+)
+
+const Actions = () => {
+  const clear = useSetAtom(clearMessagesAtom)
+  return (
+    <button onClick={clear}>Clear Messages</button>
+  )
+}
+```
+
 Also, `chatAtoms` is created out of the Component lifecycle,
 so you can share the state between different components easily.
 
-#### Load messages on demand
+#### Load messages on demand with React Suspense
 
 `chatAtoms` also allows you to pass async fetch function to `initialMessage` option, which is not supported by `useChat`.
 
@@ -101,11 +119,6 @@ const {
 With the combination with `jotai-effect`, you can create a chatbot with local storage support.
 
 ```js
-import { Suspense } from 'react'
-import { useAtomValue } from 'jotai'
-import { chatAtoms } from 'jotai-ai'
-import { atomEffect } from 'jotai-effect'
-
 const {
   messagesAtom
 } = chatAtoms({

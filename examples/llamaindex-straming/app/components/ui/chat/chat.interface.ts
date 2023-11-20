@@ -10,6 +10,7 @@ export interface ChatHandler {
   isLoading: boolean;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  clear?: () => void;
   reload?: () => void;
   stop?: () => void;
 }

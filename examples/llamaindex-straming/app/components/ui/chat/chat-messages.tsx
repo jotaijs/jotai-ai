@@ -5,7 +5,7 @@ import ChatMessage from "./chat-message";
 import { ChatHandler } from "./chat.interface";
 
 export default function ChatMessages(
-  props: Pick<ChatHandler, "messages" | "isLoading" | "reload" | "stop">,
+  props: Pick<ChatHandler, "messages" | "isLoading" | "reload" | "stop" | "clear">,
 ) {
   const scrollableChatContainerRef = useRef<HTMLDivElement>(null);
   const messageLength = props.messages.length;
@@ -20,6 +20,7 @@ export default function ChatMessages(
 
   const isLastMessageFromAssistant =
     messageLength > 0 && lastMessage?.role !== "user";
+  const showClear = props.clear && messageLength > 0;
   const showReload =
     props.reload && !props.isLoading && isLastMessageFromAssistant;
   const showStop = props.stop && props.isLoading;
@@ -40,8 +41,10 @@ export default function ChatMessages(
       </div>
       <div className="flex justify-end py-4">
         <ChatActions
+          clear={props.clear}
           reload={props.reload}
           stop={props.stop}
+          showClear={showClear}
           showReload={showReload}
           showStop={showStop}
         />

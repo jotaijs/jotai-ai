@@ -1,4 +1,4 @@
-'use client';
+'use client'
 import { atom, type Getter, type Setter } from 'jotai/vanilla'
 import type {
   ChatRequest,
@@ -13,6 +13,15 @@ import type React from 'react'
 import { parseComplexResponse } from './parse-complex-response'
 
 const COMPLEX_HEADER = 'X-Experimental-Stream-Data'
+
+const isPromiseLike = (value: unknown): value is PromiseLike<unknown> => {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'then' in value &&
+    typeof (value as any).then === 'function'
+  )
+}
 
 export function chatAtoms (
   chatOptions: Omit<
@@ -45,7 +54,7 @@ export function chatAtoms (
   )
   const messagesAtom = atom<
     Message[] | Promise<Message[]>,
-    [messages: Message[]],
+    [messages: ((Message[]) | Promise<Message[]>)],
     void
   >(
     get => {
@@ -174,7 +183,7 @@ export function chatAtoms (
 
         // The request has been aborted, stop reading the stream.
         if (abortController.signal.aborted) {
-          reader.cancel()
+          await reader.cancel()
           break
         }
       }
@@ -350,7 +359,20 @@ export function chatAtoms (
 
   // user side atoms
   return {
-    messagesAtom: atom(get => get(messagesAtom)),
+    messagesAtom: atom(
+      get => get(messagesAtom),
+      async (
+        get,
+        set,
+        messages: Message[]
+      ): Promise<void> => {
+        const prevMessages = get(messagesAtom)
+        if (isPromiseLike(prevMessages)) {
+          set(messagesAtom, prevMessages.then(() => messages))
+        } else {
+          set(messagesAtom, messages)
+        }
+      }),
     isLoadingAtom: atom(get => get(isLoadingAtom)),
     inputAtom: atom(
       get => get(inputBaseAtom),
