@@ -1,0 +1,41 @@
+{
+  "name": "llamaindex-straming",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@radix-ui/react-slot": "^1.0.2",
+    "ai": "^2.2.24",
+    "class-variance-authority": "^0.7.0",
+    "jotai": "^2.5.1",
+    "jotai-ai": "workspace:*",
+    "llamaindex": "0.0.35",
+    "lucide-react": "^0.292.0",
+    "next": "^14.0.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-markdown": "^8.0.7",
+    "react-syntax-highlighter": "^15.5.0",
+    "remark": "^14.0.3",
+    "remark-code-import": "^1.2.0",
+    "remark-gfm": "^3.0.1",
+    "remark-math": "^5.1.1",
+    "tailwind-merge": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.9.2",
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "@types/react-syntax-highlighter": "^15.5.6",
+    "autoprefixer": "^10.4.16",
+    "eslint": "^8.54.0",
+    "eslint-config-next": "^14.0.3",
+    "postcss": "^8.4.31",
+    "tailwindcss": "^3.3.5",
+    "typescript": "^5.2.2"
+  }
+}

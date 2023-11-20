@@ -360,6 +360,41 @@ export function chatAtoms (
       }, options).catch(err => onError(get, set, err))
       // clear input
       set(inputBaseAtom, '')
+    }),
+    reloadAtom: atom(null, (
+      get,
+      set,
+      { options, functions, function_call }: ChatRequestOptions = {}
+    ) => {
+      const messages = get(messagesAtom)
+      if (messages.length === 0) return null
+
+      // Remove last assistant message and retry last user message.
+      const lastMessage = messages[messages.length - 1]
+      if (lastMessage.role === 'assistant') {
+        const chatRequest: ChatRequest = {
+          messages: messages.slice(0, -1),
+          options,
+          ...(functions !== undefined && { functions }),
+          ...(function_call !== undefined && { function_call })
+        }
+
+        return triggerRequest(get, set, chatRequest)
+      }
+
+      const chatRequest: ChatRequest = {
+        messages,
+        options,
+        ...(functions !== undefined && { functions }),
+        ...(function_call !== undefined && { function_call })
+      }
+
+      return triggerRequest(get, set, chatRequest)
+    }),
+    stopAtom: atom(null, (
+      get
+    ) => {
+      get(abortControllerAtom).abort()
     })
   }
 }
