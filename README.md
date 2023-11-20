@@ -76,11 +76,17 @@ function App () {
 `useChat` is a hook provided by Vercel AI SDK, which is a wrapper of `swr` in React, `swrv` in Vue, and `sswr` in
 Svelte.
 They actually have the different behaviors in the different frameworks.
+While swr is a powerful tool with a rich set of features tailored for data fetching and caching, such as automatic
+revalidation, request deduplication, and interval polling.
 
-`chatAtoms` provider a more flexible way to create the chatbot, which is based on `jotai` atoms, so you can use it in
-framework-agnostic way.
+The `useChat` hook simplifies the interaction model to post messages once click,
+interpreting the response, keep update of messages without leveraging `swr` functionalities.
 
-For example, you can extend the messagesAtom to add more features like `clearMessagesAtom`:
+However, `chatAtoms` provider a more flexible way to create a chatbot.
+Built on the foundation of `jotai` atoms, 
+it provides an atomic global state management system that is both powerful and flexible.
+
+For example, you can customize the `messagesAtom` to add more functionality like `clearMessagesAtom`:
 
 ```js
 const { messagesAtom } = chatAtoms()
@@ -101,9 +107,41 @@ const Actions = () => {
 Also, `chatAtoms` is created out of the Component lifecycle,
 so you can share the state between different components easily.
 
+```js
+const { messagesAtom } = chatAtoms()
+
+const Messages = () => {
+  const messages = useAtomValue(messagesAtom)
+  return (
+    <div>
+      {messages.map(m => (
+        <div key={m.id} className='whitespace-pre-wrap'>
+          {m.role === 'user' ? 'User: ' : 'AI: '}
+          {m.content}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+const UserMessages = () => {
+  const messages = useAtomValue(messagesAtom)
+  return (
+    <div>
+      {messages.filter(m => m.role === 'user').map(m => (
+        <div key={m.id} className='whitespace-pre-wrap'>
+          User: {m.content}
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
 #### Load messages on demand with React Suspense
 
-`chatAtoms` also allows you to pass async fetch function to `initialMessage` option, which is not supported by `useChat`.
+`chatAtoms` also allows you to pass async fetch function to `initialMessage` option, which is not supported
+by `useChat`.
 
 ```js
 const {
@@ -119,7 +157,8 @@ const {
 })
 ```
 
-With the combination with `jotai-effect`, you can create a chatbot with local storage support.
+With the combination with [`jotai-effect`](https://github.com/jotaijs/jotai-effect),
+you can create a chatbot with local storage support.
 
 ```js
 const {
@@ -135,6 +174,8 @@ const {
     return (await idb.get('messages')) ?? []
   }
 })
+
+import { atomEffect } from 'jotai-effect'
 
 const saveMessagesEffectAtom = atomEffect((get, set) => {
   const messages = get(messagesAtom)
