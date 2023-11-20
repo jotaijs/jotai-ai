@@ -1,10 +1,21 @@
 # AI
 
-> A Jōtai utility package compatible with Vercel AI SDK
+`jotai-ai` is a utility package compatible with [Vercel AI SDK].
+
+## Install
+
+```shell
+# npm
+npm install jotai-ai
+# or pnpm
+pnpm add jotai-ai
+# or yarn
+yarn add jotai-ai
+```
 
 ## Usage
 
-`jotai-ai` has the similar API as [Vercel AI SDK](https://sdk.vercel.ai/docs) but with Jōtai atoms.
+`jotai-ai` has the similar API as [Vercel AI SDK] but with Jōtai atoms.
 
 You can integrate it with your existing Jotai atoms easily,
 and use it in `Next.js`, `React.js`, and even Vanilla JS.
@@ -64,3 +75,9 @@ export default function Chat () {
   )
 }
 ```
+
+## LICENSE
+
+[MIT](LICENSE)
+
+[Vercel AI SDK]: https://sdk.vercel.ai/docs
