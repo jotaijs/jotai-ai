@@ -4,9 +4,10 @@
 
 ## Usage
 
-`jotai-ai` has the same API as [Vercel AI SDK](https://sdk.vercel.ai/docs) but with Jōtai atoms.
+`jotai-ai` has the similar API as [Vercel AI SDK](https://sdk.vercel.ai/docs) but with Jōtai atoms.
 
-So you can integrate it with your existing Jotai atoms easily.
+You can integrate it with your existing Jotai atoms easily,
+and use it in `Next.js`, `React.js`, and even Vanilla JS.
 
 ### `chatAtoms`
 
