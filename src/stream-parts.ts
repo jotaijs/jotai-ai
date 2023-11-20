@@ -1,5 +1,9 @@
-import { StreamString } from './utils'
-import { AssistantMessage, FunctionCall, JSONValue } from 'ai'
+import type {
+  AssistantMessage,
+  FunctionCall,
+  JSONValue,
+  StreamString
+} from 'ai'
 
 export interface StreamPart<CODE extends string, NAME extends string, TYPE> {
   code: CODE;

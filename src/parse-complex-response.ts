@@ -1,5 +1,5 @@
-import { createChunkDecoder, nanoid } from './utils'
-import { FunctionCall, JSONValue, Message } from 'ai'
+import { createChunkDecoder, nanoid } from 'ai'
+import type { FunctionCall, JSONValue, Message } from 'ai'
 
 type PrefixMap = {
   text?: Message;
@@ -117,7 +117,7 @@ export async function parseComplexResponse ({
 
       // The request has been aborted, stop reading the stream.
       if (abortController.signal.aborted) {
-        reader.cancel()
+        await reader.cancel()
         break
       }
     }

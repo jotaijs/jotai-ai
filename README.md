@@ -68,6 +68,8 @@ function App () {
 
 ### Comparison with `useChat`
 
+#### Less headache
+
 `useChat` is a hook provided by Vercel AI SDK, which is a wrapper of `swr` in React, `swrv` in Vue, and `sswr` in
 Svelte.
 They actually have the different behaviors in the different frameworks.
@@ -78,7 +80,88 @@ framework-agnostic way.
 Also, `chatAtoms` is created out of the Component lifecycle,
 so you can share the state between different components easily.
 
-Even you are using `useChat` in React, its requirements React 18.0.0+.
+#### Load messages on demand
+
+`chatAtoms` also allows you to pass async fetch function to `initialMessage` option, which is not supported by `useChat`.
+
+```js
+const {
+  messagesAtom,
+  inputAtom,
+  submitAtom
+} = chatAtoms({
+  initialMessages: async () => {
+    // fetch messages from anywhere
+    const messages = await fetchMessages()
+    return messages
+  }
+})
+```
+
+With the combination with `jotai-effect`, you can create a chatbot with local storage support.
+
+```js
+import { Suspense } from 'react'
+import { useAtomValue } from 'jotai'
+import { chatAtoms } from 'jotai-ai'
+import { atomEffect } from 'jotai-effect'
+
+const {
+  messagesAtom
+} = chatAtoms({
+  initialMessages: async () => {
+    /**
+     * call `noSSR` function if you are using next.js.
+     * @link https://foxact.skk.moe/no-ssr
+     */
+      // noSSR()
+    const idb = await import('idb-keyval')
+    return (await idb.get('messages')) ?? []
+  }
+})
+
+const saveMessagesEffectAtom = atomEffect((get, set) => {
+  const messages = get(messagesAtom)
+  const idbPromise = import('idb-keyval')
+  const abortController = new AbortController()
+  idbPromise.then(async idb => {
+    if (abortController.signal.aborted) {
+      return
+    }
+    await idb.set('messages', await messages)
+  })
+  return () => {
+    abortController.abort()
+  }
+})
+
+const Messages = () => {
+  const messages = useAtomValue(messagesAtom)
+  return (
+    <>
+      {messages.length > 0
+        ? messages.map(m => (
+          <div key={m.id} className="whitespace-pre-wrap">
+            {m.role === 'user' ? 'User: ' : 'AI: '}
+            {m.content}
+          </div>
+        ))
+        : null}
+    </>
+  )
+}
+
+const App = () => {
+  useAtomValue(saveMessagesEffectAtom)
+  return (
+    <main>
+      <Suspense fallback="loading messages...">
+        <Messages/>
+      </Suspense>
+    </main>
+  )
+}
+```
 
 ## LICENSE
 

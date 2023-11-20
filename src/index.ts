@@ -1,4 +1,4 @@
-import { atom, Getter, Setter } from 'jotai/vanilla'
+import { atom, type Getter, type Setter } from 'jotai/vanilla'
 import type {
   ChatRequest,
   ChatRequestOptions,
@@ -6,23 +6,17 @@ import type {
   JSONValue,
   Message
 } from 'ai'
+import { createChunkDecoder, nanoid } from 'ai'
 import type { CreateMessage, UseChatOptions } from 'ai/react'
 import type React from 'react'
-import { customAlphabet } from 'nanoid/non-secure'
 import { parseComplexResponse } from './parse-complex-response'
-import { createChunkDecoder } from 'ai'
 
 export const COMPLEX_HEADER = 'X-Experimental-Stream-Data'
-
-export const nanoid = customAlphabet(
-  '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
-  7
-)
 
 export function chatAtoms (
   chatOptions: Omit<
     UseChatOptions,
-    'onFinish' | 'onResponse' | 'onError' | 'experimental_onFunctionCall'
+    'onFinish' | 'onResponse' | 'onError' | 'experimental_onFunctionCall' | 'initialMessages'
   > & {
     onFinish?: (get: Getter, set: Setter, message: Message) => void;
     onResponse?: (
@@ -37,14 +31,38 @@ export function chatAtoms (
       chatMessages: Message[],
       functionCall: FunctionCall
     ) => Promise<void | ChatRequest>;
+    // if you pass async function or promise, you will need a suspense boundary
+    initialMessages?: Message[] | Promise<Message[]> | (() => Message[] | Promise<Message[]>);
   } = {}
 ) {
   const api = chatOptions.api || '/api/chat'
   const sendExtraMessageFields = chatOptions.sendExtraMessageFields || false
 
-  // todo: support suspense
-  const messagesAtom = atom<Message[]>(
-    chatOptions.initialMessages || [])
+  const initialMessages = chatOptions.initialMessages || []
+  const primitiveMessagesAtom = atom<Message[] | Promise<Message[]> | null>(
+    typeof initialMessages === 'function' ? null : initialMessages
+  )
+  const messagesAtom = atom<
+    Message[] | Promise<Message[]>,
+    [messages: Message[]],
+    void
+  >(
+    get => {
+      const messages = get(primitiveMessagesAtom)
+      if (messages === null) {
+        return (initialMessages as () => (Message[] | Promise<Message[]>))()
+      } else {
+        return messages
+      }
+    },
+    (
+      get,
+      set,
+      messages
+    ) => {
+      set(primitiveMessagesAtom, messages)
+    }
+  )
   const dataAtom = atom<JSONValue[] | undefined>(undefined)
   const inputBaseAtom = atom(chatOptions.initialInput || '')
 
@@ -162,10 +180,8 @@ export function chatAtoms (
 
       if (streamedResponse.startsWith('{"function_call":')) {
         // Once the stream is complete, the function call is parsed into an object.
-        const parsedFunctionCall: FunctionCall =
-          JSON.parse(streamedResponse).function_call
-
-        responseMessage['function_call'] = parsedFunctionCall
+        responseMessage['function_call'] = JSON.parse(
+          streamedResponse).function_call
 
         appendMessage(set, prevMessages, { ...responseMessage })
       }
@@ -201,7 +217,7 @@ export function chatAtoms (
       set,
       get(abortControllerAtom),
       get(metadataAtom),
-      get(messagesAtom),
+      await get(messagesAtom),
       {
         ...chatRequest,
         messages: constructedMessagesPayload
@@ -249,7 +265,7 @@ export function chatAtoms (
                 await onFunctionCall(
                   get,
                   set,
-                  get(messagesAtom),
+                  await get(messagesAtom),
                   functionCall
                 )
 
@@ -280,7 +296,8 @@ export function chatAtoms (
           if (onFunctionCall) {
             const functionCall = streamedResponseMessage.function_call
             const functionCallResponse: ChatRequest | void =
-              await onFunctionCall(get, set, get(messagesAtom), functionCall)
+              await onFunctionCall(get, set, await get(messagesAtom),
+                functionCall)
 
             // If the user does not return anything as a result of the function call, the loop will break.
             if (functionCallResponse === undefined) break
@@ -305,7 +322,7 @@ export function chatAtoms (
       message.id = nanoid()
     }
 
-    const messages = get(messagesAtom)
+    const messages = await get(messagesAtom)
 
     const chatRequest: ChatRequest = {
       messages: messages.concat(message as Message),
@@ -332,7 +349,7 @@ export function chatAtoms (
 
   // user side atoms
   return {
-    messagesAtom,
+    messagesAtom: atom(get => get(messagesAtom)),
     isLoadingAtom: atom(get => get(isLoadingAtom)),
     inputAtom: atom(
       get => get(inputBaseAtom),
@@ -353,23 +370,24 @@ export function chatAtoms (
       e.preventDefault()
       const input = get(inputBaseAtom)
       if (!input) return
-      append(get, set, {
+      const promise = append(get, set, {
         content: input,
         role: 'user',
         createdAt: new Date()
       }, options).catch(err => onError(get, set, err))
       // clear input
       set(inputBaseAtom, '')
+      return promise
     }),
-    reloadAtom: atom(null, (
+    reloadAtom: atom(null, async (
       get,
       set,
       { options, functions, function_call }: ChatRequestOptions = {}
     ) => {
-      const messages = get(messagesAtom)
+      const messages = await get(messagesAtom)
       if (messages.length === 0) return null
 
-      // Remove last assistant message and retry last user message.
+      // Remove the last assistant message and retry the last user message.
       const lastMessage = messages[messages.length - 1]
       if (lastMessage.role === 'assistant') {
         const chatRequest: ChatRequest = {
