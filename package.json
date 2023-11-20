@@ -2,12 +2,20 @@
   "name": "jotai-ai",
   "version": "0.0.1",
   "type": "module",
-  "main": "index.js",
+  "module": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
   "files": [
     "src",
     "dist"
   ],
   "scripts": {
+    "build": "bunchee",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -20,6 +28,7 @@
   "devDependencies": {
     "@types/react": "^18.2.37",
     "ai": "^2.2.24",
+    "bunchee": "^3.9.2",
     "jotai": "^2.5.1",
     "react": "^18.2.0",
     "typescript": "^5.2.2"
