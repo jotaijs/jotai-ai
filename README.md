@@ -73,20 +73,20 @@ function App () {
 
 #### Less headache
 
-`useChat` is a hook provided by Vercel AI SDK, which is a wrapper of `swr` in React, `swrv` in Vue, and `sswr` in
-Svelte.
-They actually have the different behaviors in the different frameworks.
-While swr is a powerful tool with a rich set of features tailored for data fetching and caching, such as automatic
-revalidation, request deduplication, and interval polling.
+`useChat` is a hook provided by the Vercel AI SDK, which acts as a wrapper for `swr` in React, `swrv` in Vue, and `sswr`
+in Svelte.
+Each of these has different behaviors in their respective frameworks.
+Although `swr` is a powerful tool with a rich set of features designed for data fetching and caching, including
+automatic revalidation, request deduplication, and interval polling, the `useChat` hook opts for a simplified
+interaction model.
+It enables users to post messages with a single click, interpret responses, and maintain an updated
+message history, all without tapping into the extensive capabilities of `swr`.
 
-The `useChat` hook simplifies the interaction model to post messages once click,
-interpreting the response, keep update of messages without leveraging `swr` functionalities.
+However, `chatAtoms` provides a more flexible way to create a chatbot.
+Built on the foundation of `jotai` atoms, it
+offers an atomic global state management system that is both powerful and flexible.
 
-However, `chatAtoms` provider a more flexible way to create a chatbot.
-Built on the foundation of `jotai` atoms, 
-it provides an atomic global state management system that is both powerful and flexible.
-
-For example, you can customize the `messagesAtom` to add more functionality like `clearMessagesAtom`:
+For example, you can customize the `messagesAtom` to add more functionality, such as `clearMessagesAtom`:
 
 ```js
 const { messagesAtom } = chatAtoms()
