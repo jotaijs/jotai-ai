@@ -14,9 +14,9 @@ import {
   type Message,
   nanoid
 } from 'ai'
-import React from 'react'
 import { parseComplexResponse } from './utils/parse-complex-response'
 import { isPromiseLike } from './utils'
+import type { FormEvent } from 'react'
 
 export function chatAtoms (
   chatOptions: Omit<
@@ -398,7 +398,7 @@ export function chatAtoms (
     submitAtom: atom(null, (
       get,
       set,
-      e: React.FormEvent<HTMLFormElement>,
+      e: FormEvent<HTMLFormElement>,
       options: ChatRequestOptions = {},
       metadata?: Object
     ) => {
