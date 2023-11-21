@@ -4,6 +4,7 @@
     "strictNullChecks": true,
     "module": "ESNext",
     "target": "ES2018",
+    "verbatimModuleSyntax": true,
     "moduleResolution": "bundler"
   },
   "exclude": [
