@@ -395,7 +395,7 @@ export function chatAtoms (
         set(inputBaseAtom, event.target.value)
       }
     ),
-    submitAtom: atom(null, (
+    submitAtom: atom(get => get(isLoadingAtom), (
       get,
       set,
       e: FormEvent<HTMLFormElement>,
