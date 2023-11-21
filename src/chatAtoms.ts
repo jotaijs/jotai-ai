@@ -106,10 +106,21 @@ export function chatAtoms (
       method: 'POST',
       signal: abortController?.signal,
       body: JSON.stringify({
+        data: chatRequest.data,
         messages: chatRequest.messages,
-        ...metadata.body
+        ...metadata.body,
+        ...chatRequest.options?.body,
+        ...(chatRequest.functions !== undefined && {
+          functions: chatRequest.functions
+        }),
+        ...(chatRequest.function_call !== undefined && {
+          function_call: chatRequest.function_call
+        })
       }),
-      headers: { ...metadata.headers },
+      headers: {
+        ...metadata.headers,
+        ...chatRequest.options?.headers
+      },
       credentials: metadata.credentials
     })
 
