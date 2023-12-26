@@ -9,16 +9,16 @@
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.0.2",
-    "ai": "^2.2.24",
+    "ai": "^2.2.30",
     "class-variance-authority": "^0.7.0",
-    "foxact": "^0.2.26",
+    "foxact": "^0.2.28",
     "idb-keyval": "^6.2.1",
-    "jotai": "^2.5.1",
+    "jotai": "^2.6.0",
     "jotai-ai": "workspace:*",
     "jotai-effect": "^0.2.3",
-    "llamaindex": "0.0.35",
-    "lucide-react": "^0.292.0",
-    "next": "^14.0.3",
+    "llamaindex": "0.0.40",
+    "lucide-react": "^0.302.0",
+    "next": "^14.0.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-markdown": "^8.0.7",
@@ -27,18 +27,18 @@
     "remark-code-import": "^1.2.0",
     "remark-gfm": "^3.0.1",
     "remark-math": "^5.1.1",
-    "tailwind-merge": "^2.0.0"
+    "tailwind-merge": "^2.2.0"
   },
   "devDependencies": {
-    "@types/node": "^20.9.2",
-    "@types/react": "^18.2.37",
-    "@types/react-dom": "^18.2.15",
-    "@types/react-syntax-highlighter": "^15.5.6",
+    "@types/node": "^20.10.5",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "@types/react-syntax-highlighter": "^15.5.11",
     "autoprefixer": "^10.4.16",
-    "eslint": "^8.54.0",
-    "eslint-config-next": "^14.0.3",
-    "postcss": "^8.4.31",
-    "tailwindcss": "^3.3.5",
-    "typescript": "^5.2.2"
+    "eslint": "^8.56.0",
+    "eslint-config-next": "^14.0.4",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.3.3"
   }
 }
