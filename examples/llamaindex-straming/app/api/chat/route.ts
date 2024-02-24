@@ -3,6 +3,7 @@ import { OpenAI } from "llamaindex";
 import { NextRequest, NextResponse } from "next/server";
 import { createChatEngine } from "./engine";
 import { LlamaIndexStream } from "./llamaindex-stream";
+import type { MessageType } from 'llamaindex/llm/types'
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,7 +29,14 @@ export async function POST(request: NextRequest) {
 
     const chatEngine = await createChatEngine(llm);
 
-    const response = await chatEngine.chat(lastMessage.content, messages, true);
+    const response = await chatEngine.chat({
+      message : lastMessage.content,
+      chatHistory : messages.map((message) => ({
+        content: message.content,
+        role: message.role as MessageType,
+      })),
+      stream: true
+    })
 
     // Transform the response into a readable stream
     const stream = LlamaIndexStream(response);
