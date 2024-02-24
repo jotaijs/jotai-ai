@@ -383,6 +383,7 @@ export function chatAtoms (
           set(messagesAtom, messages)
         }
       }),
+    dataAtom: atom(get => get(dataAtom)),
     isLoadingAtom: atom(get => get(isLoadingAtom)),
     isPendingAtom: atom(get => get(isPendingAtom)),
     inputAtom: atom(
