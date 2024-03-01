@@ -73,7 +73,6 @@ export function chatAtoms (
 
   const abortControllerAtom = atom<AbortController>(new AbortController())
   const isLoadingAtom = atom(false)
-  const isPendingAtom = atom(false)
 
   type Metadata = {
     credentials?: RequestCredentials;
@@ -125,7 +124,6 @@ export function chatAtoms (
     })
 
     if (chatOptions.onResponse) {
-      set(isPendingAtom, false)
       try {
         await chatOptions.onResponse(
           get,
@@ -250,7 +248,6 @@ export function chatAtoms (
   ) {
     const onFunctionCall = chatOptions.experimental_onFunctionCall
     try {
-      set(isPendingAtom, true)
       set(isLoadingAtom, true)
       const abortController = new AbortController()
       set(abortControllerAtom, abortController)
@@ -327,7 +324,6 @@ export function chatAtoms (
         }
       }
     } finally {
-      set(isPendingAtom, false)
       set(isLoadingAtom, false)
     }
   }
@@ -385,7 +381,13 @@ export function chatAtoms (
       }),
     dataAtom: atom(get => get(dataAtom)),
     isLoadingAtom: atom(get => get(isLoadingAtom)),
-    isPendingAtom: atom(get => get(isPendingAtom)),
+    isPendingAtom: atom(get => {
+      const messages = get(messagesAtom)
+      if (isPromiseLike(messages)) {
+        return messages.then((messages)=> messages.at(-1)?.role !== 'assistant')
+      }
+      return messages.at(-1)?.role !== 'assistant'
+    }),
     inputAtom: atom(
       get => get(inputBaseAtom),
       (get, set, event: {
