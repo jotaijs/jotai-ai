@@ -8,6 +8,12 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./rsc": {
+      "types": "./dist/rsc.d.ts",
+      "react-server": "./dist/rsc.react-server.js",
+      "import": "./dist/rsc.js",
+      "require": "./dist/rsc.cjs"
     }
   },
   "files": [
@@ -29,7 +35,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/react": "18.2.58",
-    "ai": "2.2.36",
+    "ai": "3.0.0",
     "bunchee": "4.4.8",
     "jotai": "2.6.5",
     "react": "18.2.0",
