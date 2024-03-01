@@ -65,6 +65,7 @@ export default function ChatSection () {
   const [input, handleInputChange] = useAtom(inputAtom)
   const handleSubmit = useSetAtom(submitAtom)
   const isLoading = useAtomValue(isLoadingAtom)
+  console.log('isLoading', isLoading)
 
   return (
     <div className="space-y-4 max-w-5xl w-full">
