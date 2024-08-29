@@ -7,13 +7,17 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@ai-sdk/provider-utils':
+        specifier: ^1.0.17
+        version: 1.0.17(zod@3.23.8)
+      '@ai-sdk/ui-utils':
+        specifier: ^0.0.39
+        version: 0.0.39(zod@3.23.8)
     devDependencies:
       '@types/react':
         specifier: 18.2.58
         version: 18.2.58
-      ai:
-        specifier: ^3.3.20
-        version: 3.3.20(react@18.3.1)(svelte@4.2.5)(vue@3.3.8)(zod@3.23.8)
       bunchee:
         specifier: 4.4.8
         version: 4.4.8(typescript@5.5.4)
@@ -34,7 +38,7 @@ importers:
         version: 1.0.2(@types/react@18.2.58)(react@18.2.0)
       ai:
         specifier: ^2.2.36
-        version: 2.2.36(react@18.2.0)(solid-js@1.8.5)(svelte@4.2.5)(vue@3.3.8)
+        version: 2.2.36(react@18.2.0)(solid-js@1.8.5)(svelte@4.2.5)(vue@3.3.8(typescript@5.3.3))
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.0
@@ -52,16 +56,16 @@ importers:
         version: link:../..
       jotai-effect:
         specifier: ^0.5.0
-        version: 0.5.0(jotai@2.6.5)
+        version: 0.5.0(jotai@2.6.5(@types/react@18.2.58)(react@18.2.0))
       llamaindex:
         specifier: 0.1.16
-        version: 0.1.16(typescript@5.3.3)
+        version: 0.1.16(encoding@0.1.13)(typescript@5.3.3)
       lucide-react:
         specifier: ^0.338.0
         version: 0.338.0(react@18.2.0)
       next:
         specifier: ^14.1.0
-        version: 14.1.0(react-dom@18.2.0)(react@18.2.0)
+        version: 14.1.0(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       react:
         specifier: ^18.2.0
         version: 18.2.0
@@ -140,36 +144,6 @@ packages:
     resolution: {integrity: sha512-smZ1/2jL/JSKnbhC6ama/PxI2D/psj+YAe0c0qpd5ComQCNFltg72VFf0rpUSFMmFuj1pCCNoBOCrvyl8HTZHQ==}
     engines: {node: '>=18'}
 
-  '@ai-sdk/react@0.0.52':
-    resolution: {integrity: sha512-4Gm+AoINDXQ4lzIZFKOWOcKgjgiAFdyhmBxnyuaqzTJCoRWNUSea62xhjqRE0u8wagfPgxWUAyS8BAsY0EqOyg==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      react: ^18 || ^19
-      zod: ^3.0.0
-    peerDependenciesMeta:
-      react:
-        optional: true
-      zod:
-        optional: true
-
-  '@ai-sdk/solid@0.0.42':
-    resolution: {integrity: sha512-tr1rXRg0bLls7ZEQCWfd0Tv7irFlKQRjBSKSCstwrGtTeDA7zwUP4tIiUaCyzM3lwyE6Qgl17SrAoxSD+xP+zQ==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      solid-js: ^1.7.7
-    peerDependenciesMeta:
-      solid-js:
-        optional: true
-
-  '@ai-sdk/svelte@0.0.44':
-    resolution: {integrity: sha512-soSiEX1BUiwRSdoc+7mAoCeuM3Vs/ebdb1gNL7ta9Zma7GTHq802Wi7KfWfypoAqpgi0QUapzCRMvgrl4oW4AQ==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      svelte: ^3.0.0 || ^4.0.0
-    peerDependenciesMeta:
-      svelte:
-        optional: true
-
   '@ai-sdk/ui-utils@0.0.39':
     resolution: {integrity: sha512-yxlJBFEiWR7rf/oS7MFX9O5Hr7VYV0ipMBrvds66N3+m52/nCbBB5C/eBefzeR+hoGc/r5xGo7Yd1cncGYHHTw==}
     engines: {node: '>=18'}
@@ -177,15 +151,6 @@ packages:
       zod: ^3.0.0
     peerDependenciesMeta:
       zod:
-        optional: true
-
-  '@ai-sdk/vue@0.0.44':
-    resolution: {integrity: sha512-IsDCoy7u4V081dKT1i6b/Cxh2G0aftetbif+qNQGh5QeU9TtGs9KDW+onPkXeqlDQcpMN0Q5zaNGaZ7YBK50Gw==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      vue: ^3.3.4
-    peerDependenciesMeta:
-      vue:
         optional: true
 
   '@alloc/quick-lru@5.2.0':
@@ -291,6 +256,7 @@ packages:
   '@humanwhocodes/config-array@0.11.14':
     resolution: {integrity: sha512-3T8LkOmg45BV5FICb15QQMsyUSWrQ8AygVfC7ZG32zOalnqrilm018ZVCw0eapXux8FtA33q8PSRSstjee3jSg==}
     engines: {node: '>=10.10.0'}
+    deprecated: Use @eslint/config-array instead
 
   '@humanwhocodes/module-importer@1.0.1':
     resolution: {integrity: sha512-bxveV4V8v5Yb4ncFTT3rPSgZBOpCkjfK0y4oVVVJwIuDVBRMDXrPyXRL988i5ap9m9bnyEEjWfm5WkBmtffLfA==}
@@ -298,6 +264,7 @@ packages:
 
   '@humanwhocodes/object-schema@2.0.2':
     resolution: {integrity: sha512-6EwiSjwWYP7pTckG6I5eyFANjPhmPjUX9JRLUSfNPC7FX7zK9gyZAfUEaECL6ALTpGX5AjnBq3C9XmVWPitNpw==}
+    deprecated: Use @eslint/object-schema instead
 
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
@@ -710,9 +677,6 @@ packages:
   '@types/debug@4.1.12':
     resolution: {integrity: sha512-vIChWdVG3LG1SMxEvI/AK+FWJthlrqlTu7fbrlywTkkaONwk/UAGaULXRlf8vkzFBLVm0zkMdCquhL5aOjhXPQ==}
 
-  '@types/diff-match-patch@1.0.36':
-    resolution: {integrity: sha512-xFdR6tkm0MWvBfO8xXCSsinYxHcqkQUlcHeSpMC2ukzOb6lwQAfDmW+Qt0AvlGd8HpsS28qKsB+oPeJn9I39jg==}
-
   '@types/estree@1.0.5':
     resolution: {integrity: sha512-/kYRxGDLWzHOB7q+wtSUQlFrtcdUccpfy+X+9iMBpHK8QLLhx2wIPYuS5DYtR9Wa/YlZAbIovy7qVdB1Aq6Lyw==}
 
@@ -886,27 +850,6 @@ packages:
       svelte:
         optional: true
       vue:
-        optional: true
-
-  ai@3.3.20:
-    resolution: {integrity: sha512-GKiL34BPVGgSEDkUlt8nyVRZkx1btnbXyw/bZKj1Jx5sCn/OY/qgiACzakhRzC/90UlxmrMsU1rZGW+Xr8+kFA==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      openai: ^4.42.0
-      react: ^18 || ^19
-      sswr: ^2.1.0
-      svelte: ^3.0.0 || ^4.0.0
-      zod: ^3.0.0
-    peerDependenciesMeta:
-      openai:
-        optional: true
-      react:
-        optional: true
-      sswr:
-        optional: true
-      svelte:
-        optional: true
-      zod:
         optional: true
 
   ajv@6.12.6:
@@ -1118,10 +1061,6 @@ packages:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
     engines: {node: '>=10'}
 
-  chalk@5.3.0:
-    resolution: {integrity: sha512-dLitG79d+GV1Nb/VYcCDFivJeK1hiukt9QjRNVOsUtTy1rR1YJsmpGGTZ3qJos+uw7WmWF4wUwBd9jxjocFC2w==}
-    engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
-
   character-entities-legacy@1.1.4:
     resolution: {integrity: sha512-3Xnr+7ZFS1uxeiUDvV02wQ+QDbc55o97tIV5zHScSPJpcLm/r0DFPcoY3tYRp+VZukxuMeKgXYmsXQHO05zQeA==}
 
@@ -1322,9 +1261,6 @@ packages:
 
   didyoumean@1.2.2:
     resolution: {integrity: sha512-gxtyfqMg7GKyhQmb056K7M3xszy/myH8w+B4RT+QXBQsvAOdc3XymqDDPHx1BgPgsdAA5SIifona89YtRATDzw==}
-
-  diff-match-patch@1.0.5:
-    resolution: {integrity: sha512-IayShXAgj/QMXgB0IWmKx+rOPuGMhqm5w6jvFxmVenXKIzRqTAAsbBPT3kWQeGANj3jGgvcvv4yK6SxqYmikgw==}
 
   diff@5.1.0:
     resolution: {integrity: sha512-D+mk+qE8VC/PAUrlAU34N+VfXev0ghe5ywmpqrawphmVZc1bEfn56uo9qpyGp1p4xpzOHkSW4ztBd6L7Xx4ACw==}
@@ -1695,13 +1631,16 @@ packages:
 
   glob@7.1.6:
     resolution: {integrity: sha512-LwaxwyZ72Lk7vZINtNNrywX0ZuLyStrdDtabefZKAY5ZGJhVtgdznluResxNmPitE0SAO+O26sWTHeKSI2wMBA==}
+    deprecated: Glob versions prior to v9 are no longer supported
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
+    deprecated: Glob versions prior to v9 are no longer supported
 
   glob@8.1.0:
     resolution: {integrity: sha512-r8hpEjiQEYlF2QU0df3dS+nxxSIreXQS1qRhMJM0Q5NDdR386C7jb7Hwwod8Fgiuex+k0GFjgft18yvxm5XoCQ==}
     engines: {node: '>=12'}
+    deprecated: Glob versions prior to v9 are no longer supported
 
   globals@13.23.0:
     resolution: {integrity: sha512-XAmF0RjlrjY23MA51q3HltdlGxUpXPvg0GioKiD9X6HD28iMjo2dKC8Vqwm7lne4GNr78+RHTfliktR6ZH09wA==}
@@ -1802,6 +1741,7 @@ packages:
 
   inflight@1.0.6:
     resolution: {integrity: sha512-k92I/b08q4wvFscXCLvqfsHCrjrF7yiXsQuIVvVE7N82W3+aqpzuUdBbfhWcy/FZR3/4IgflMgKLOsvPDrGCJA==}
+    deprecated: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
 
   inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
@@ -2039,11 +1979,6 @@ packages:
 
   json5@1.0.2:
     resolution: {integrity: sha512-g1MWMLBiz8FKi1e4w0UyVL3w+iJceWAFBAaBnnGKOpNa5f8TLktkbre1+s6oICydWAm+HRUGTmI+//xv2hvXYA==}
-    hasBin: true
-
-  jsondiffpatch@0.6.0:
-    resolution: {integrity: sha512-3QItJOXp2AP1uv7waBkao5nCvhEv+QmJAd38Ybq7wNI74Q+BBmnLn4EDKz6yI9xGAIQoUF87qHt+kc1IVxB4zQ==}
-    engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
 
   jsonfile@2.4.0:
@@ -2909,6 +2844,7 @@ packages:
 
   rimraf@3.0.2:
     resolution: {integrity: sha512-JZkJMZkAGFFPP2YqXZXPbMlMBgsxzE8ILs4lMIX/2o0L9UBw9O/Y3o6wFw/i9YLapcUJWwqbi3kdxIPdC62TIA==}
+    deprecated: Rimraf versions prior to v4 are no longer supported
     hasBin: true
 
   rimraf@5.0.5:
@@ -3071,11 +3007,6 @@ packages:
     peerDependencies:
       svelte: ^4.0.0
 
-  sswr@2.1.0:
-    resolution: {integrity: sha512-Cqc355SYlTAaUt8iDPaC/4DPPXK925PePLMxyBKuWd5kKc5mwsG3nT9+Mq2tyguL5s7b4Jg+IRMpTRsNTAfpSQ==}
-    peerDependencies:
-      svelte: ^4.0.0 || ^5.0.0-next.0
-
   stack-trace@0.0.10:
     resolution: {integrity: sha512-KGzahc7puUKkzyMt+IqAep+TVNbKP+k2Lmwhub39m1AsTSkaDutx56aDCo+HLDzf/D26BIHTJWNiTG1KAJiQCg==}
 
@@ -3200,11 +3131,6 @@ packages:
 
   swr@2.2.0:
     resolution: {integrity: sha512-AjqHOv2lAhkuUdIiBu9xbuettzAzWXmCEcLONNKJRba87WAefz8Ca9d6ds/SzrPc235n1IxWYdhJ2zF3MNUaoQ==}
-    peerDependencies:
-      react: ^16.11.0 || ^17.0.0 || ^18.0.0
-
-  swr@2.2.5:
-    resolution: {integrity: sha512-QtxqyclFeAsxEUeZIYmsaQ0UjimSq1RZ9Un7I68/0ClKK/U3LoyQunwkQfJZr2fc22DfIXLNDc2wFyTEikCUpg==}
     peerDependencies:
       react: ^16.11.0 || ^17.0.0 || ^18.0.0
 
@@ -3546,35 +3472,12 @@ snapshots:
       eventsource-parser: 1.1.2
       nanoid: 3.3.6
       secure-json-parse: 2.7.0
+    optionalDependencies:
       zod: 3.23.8
 
   '@ai-sdk/provider@0.0.22':
     dependencies:
       json-schema: 0.4.0
-
-  '@ai-sdk/react@0.0.52(react@18.3.1)(zod@3.23.8)':
-    dependencies:
-      '@ai-sdk/provider-utils': 1.0.17(zod@3.23.8)
-      '@ai-sdk/ui-utils': 0.0.39(zod@3.23.8)
-      react: 18.3.1
-      swr: 2.2.5(react@18.3.1)
-      zod: 3.23.8
-
-  '@ai-sdk/solid@0.0.42(zod@3.23.8)':
-    dependencies:
-      '@ai-sdk/provider-utils': 1.0.17(zod@3.23.8)
-      '@ai-sdk/ui-utils': 0.0.39(zod@3.23.8)
-    transitivePeerDependencies:
-      - zod
-
-  '@ai-sdk/svelte@0.0.44(svelte@4.2.5)(zod@3.23.8)':
-    dependencies:
-      '@ai-sdk/provider-utils': 1.0.17(zod@3.23.8)
-      '@ai-sdk/ui-utils': 0.0.39(zod@3.23.8)
-      sswr: 2.1.0(svelte@4.2.5)
-      svelte: 4.2.5
-    transitivePeerDependencies:
-      - zod
 
   '@ai-sdk/ui-utils@0.0.39(zod@3.23.8)':
     dependencies:
@@ -3582,17 +3485,9 @@ snapshots:
       '@ai-sdk/provider-utils': 1.0.17(zod@3.23.8)
       json-schema: 0.4.0
       secure-json-parse: 2.7.0
-      zod: 3.23.8
       zod-to-json-schema: 3.23.2(zod@3.23.8)
-
-  '@ai-sdk/vue@0.0.44(vue@3.3.8)(zod@3.23.8)':
-    dependencies:
-      '@ai-sdk/provider-utils': 1.0.17(zod@3.23.8)
-      '@ai-sdk/ui-utils': 0.0.39(zod@3.23.8)
-      swrv: 1.0.4(vue@3.3.8)
-      vue: 3.3.8(typescript@5.5.4)
-    transitivePeerDependencies:
-      - zod
+    optionalDependencies:
+      zod: 3.23.8
 
   '@alloc/quick-lru@5.2.0': {}
 
@@ -3601,7 +3496,7 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.3
       '@jridgewell/trace-mapping': 0.3.20
 
-  '@anthropic-ai/sdk@0.13.1':
+  '@anthropic-ai/sdk@0.13.1(encoding@0.1.13)':
     dependencies:
       '@types/node': 18.18.10
       '@types/node-fetch': 2.6.9
@@ -3760,7 +3655,7 @@ snapshots:
     dependencies:
       lodash: 4.17.21
 
-  '@mistralai/mistralai@0.0.10':
+  '@mistralai/mistralai@0.0.10(encoding@0.1.13)':
     dependencies:
       node-fetch: 2.7.0(encoding@0.1.13)
     transitivePeerDependencies:
@@ -3815,14 +3710,15 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.15.0
 
-  '@notionhq/client@2.2.14':
+  '@notionhq/client@2.2.14(encoding@0.1.13)':
     dependencies:
       '@types/node-fetch': 2.6.9
       node-fetch: 2.7.0(encoding@0.1.13)
     transitivePeerDependencies:
       - encoding
 
-  '@opentelemetry/api@1.9.0': {}
+  '@opentelemetry/api@1.9.0':
+    optional: true
 
   '@pinecone-database/pinecone@2.0.1':
     dependencies:
@@ -3869,15 +3765,17 @@ snapshots:
   '@radix-ui/react-compose-refs@1.0.1(@types/react@18.2.58)(react@18.2.0)':
     dependencies:
       '@babel/runtime': 7.23.2
-      '@types/react': 18.2.58
       react: 18.2.0
+    optionalDependencies:
+      '@types/react': 18.2.58
 
   '@radix-ui/react-slot@1.0.2(@types/react@18.2.58)(react@18.2.0)':
     dependencies:
       '@babel/runtime': 7.23.2
       '@radix-ui/react-compose-refs': 1.0.1(@types/react@18.2.58)(react@18.2.0)
-      '@types/react': 18.2.58
       react: 18.2.0
+    optionalDependencies:
+      '@types/react': 18.2.58
 
   '@rollup/plugin-commonjs@25.0.7(rollup@4.12.0)':
     dependencies:
@@ -3887,11 +3785,13 @@ snapshots:
       glob: 8.1.0
       is-reference: 1.2.1
       magic-string: 0.30.7
+    optionalDependencies:
       rollup: 4.12.0
 
   '@rollup/plugin-json@6.1.0(rollup@4.12.0)':
     dependencies:
       '@rollup/pluginutils': 5.1.0(rollup@4.12.0)
+    optionalDependencies:
       rollup: 4.12.0
 
   '@rollup/plugin-node-resolve@15.2.3(rollup@4.12.0)':
@@ -3902,17 +3802,20 @@ snapshots:
       is-builtin-module: 3.2.1
       is-module: 1.0.0
       resolve: 1.22.8
+    optionalDependencies:
       rollup: 4.12.0
 
   '@rollup/plugin-replace@5.0.5(rollup@4.12.0)':
     dependencies:
       '@rollup/pluginutils': 5.1.0(rollup@4.12.0)
       magic-string: 0.30.7
+    optionalDependencies:
       rollup: 4.12.0
 
   '@rollup/plugin-wasm@6.2.2(rollup@4.12.0)':
     dependencies:
       '@rollup/pluginutils': 5.1.0(rollup@4.12.0)
+    optionalDependencies:
       rollup: 4.12.0
 
   '@rollup/pluginutils@5.1.0(rollup@4.12.0)':
@@ -3920,6 +3823,7 @@ snapshots:
       '@types/estree': 1.0.5
       estree-walker: 2.0.2
       picomatch: 2.3.1
+    optionalDependencies:
       rollup: 4.12.0
 
   '@rollup/rollup-android-arm-eabi@4.12.0':
@@ -4018,7 +3922,6 @@ snapshots:
   '@swc/core@1.4.2(@swc/helpers@0.5.3)':
     dependencies:
       '@swc/counter': 0.1.2
-      '@swc/helpers': 0.5.3
       '@swc/types': 0.1.5
     optionalDependencies:
       '@swc/core-darwin-arm64': 1.4.2
@@ -4031,6 +3934,7 @@ snapshots:
       '@swc/core-win32-arm64-msvc': 1.4.2
       '@swc/core-win32-ia32-msvc': 1.4.2
       '@swc/core-win32-x64-msvc': 1.4.2
+      '@swc/helpers': 0.5.3
 
   '@swc/counter@0.1.2': {}
 
@@ -4049,8 +3953,6 @@ snapshots:
   '@types/debug@4.1.12':
     dependencies:
       '@types/ms': 0.7.34
-
-  '@types/diff-match-patch@1.0.36': {}
 
   '@types/estree@1.0.5': {}
 
@@ -4126,6 +4028,7 @@ snapshots:
       '@typescript-eslint/typescript-estree': 5.62.0(typescript@5.3.3)
       debug: 4.3.4
       eslint: 8.57.0
+    optionalDependencies:
       typescript: 5.3.3
     transitivePeerDependencies:
       - supports-color
@@ -4146,6 +4049,7 @@ snapshots:
       is-glob: 4.0.3
       semver: 7.5.4
       tsutils: 3.21.0(typescript@5.3.3)
+    optionalDependencies:
       typescript: 5.3.3
     transitivePeerDependencies:
       - supports-color
@@ -4210,11 +4114,11 @@ snapshots:
       '@vue/shared': 3.3.8
       csstype: 3.1.2
 
-  '@vue/server-renderer@3.3.8(vue@3.3.8)':
+  '@vue/server-renderer@3.3.8(vue@3.3.8(typescript@5.3.3))':
     dependencies:
       '@vue/compiler-ssr': 3.3.8
       '@vue/shared': 3.3.8
-      vue: 3.3.8(typescript@5.5.4)
+      vue: 3.3.8(typescript@5.3.3)
 
   '@vue/shared@3.3.8': {}
 
@@ -4242,42 +4146,20 @@ snapshots:
     dependencies:
       humanize-ms: 1.2.1
 
-  ai@2.2.36(react@18.2.0)(solid-js@1.8.5)(svelte@4.2.5)(vue@3.3.8):
+  ai@2.2.36(react@18.2.0)(solid-js@1.8.5)(svelte@4.2.5)(vue@3.3.8(typescript@5.3.3)):
     dependencies:
       eventsource-parser: 1.0.0
       nanoid: 3.3.6
-      react: 18.2.0
-      solid-js: 1.8.5
       solid-swr-store: 0.10.7(solid-js@1.8.5)(swr-store@0.10.6)
       sswr: 2.0.0(svelte@4.2.5)
-      svelte: 4.2.5
       swr: 2.2.0(react@18.2.0)
       swr-store: 0.10.6
-      swrv: 1.0.4(vue@3.3.8)
-      vue: 3.3.8(typescript@5.3.3)
-
-  ai@3.3.20(react@18.3.1)(svelte@4.2.5)(vue@3.3.8)(zod@3.23.8):
-    dependencies:
-      '@ai-sdk/provider': 0.0.22
-      '@ai-sdk/provider-utils': 1.0.17(zod@3.23.8)
-      '@ai-sdk/react': 0.0.52(react@18.3.1)(zod@3.23.8)
-      '@ai-sdk/solid': 0.0.42(zod@3.23.8)
-      '@ai-sdk/svelte': 0.0.44(svelte@4.2.5)(zod@3.23.8)
-      '@ai-sdk/ui-utils': 0.0.39(zod@3.23.8)
-      '@ai-sdk/vue': 0.0.44(vue@3.3.8)(zod@3.23.8)
-      '@opentelemetry/api': 1.9.0
-      eventsource-parser: 1.1.2
-      json-schema: 0.4.0
-      jsondiffpatch: 0.6.0
-      nanoid: 3.3.6
-      react: 18.3.1
-      secure-json-parse: 2.7.0
+      swrv: 1.0.4(vue@3.3.8(typescript@5.3.3))
+    optionalDependencies:
+      react: 18.2.0
+      solid-js: 1.8.5
       svelte: 4.2.5
-      zod: 3.23.8
-      zod-to-json-schema: 3.23.2(zod@3.23.8)
-    transitivePeerDependencies:
-      - solid-js
-      - vue
+      vue: 3.3.8(typescript@5.3.3)
 
   ajv@6.12.6:
     dependencies:
@@ -4499,9 +4381,10 @@ snapshots:
       rimraf: 5.0.5
       rollup: 4.12.0
       rollup-plugin-dts: 6.1.0(rollup@4.12.0)(typescript@5.5.4)
-      rollup-plugin-swc3: 0.11.0(@swc/core@1.4.2)(rollup@4.12.0)
+      rollup-plugin-swc3: 0.11.0(@swc/core@1.4.2(@swc/helpers@0.5.3))(rollup@4.12.0)
       rollup-preserve-directives: 1.1.1(rollup@4.12.0)
       tslib: 2.6.2
+    optionalDependencies:
       typescript: 5.5.4
 
   busboy@1.6.0:
@@ -4534,8 +4417,6 @@ snapshots:
       ansi-styles: 4.3.0
       supports-color: 7.2.0
 
-  chalk@5.3.0: {}
-
   character-entities-legacy@1.1.4: {}
 
   character-entities@1.2.4: {}
@@ -4560,12 +4441,13 @@ snapshots:
 
   chownr@1.1.4: {}
 
-  chromadb@1.7.3(cohere-ai@7.7.5)(openai@4.28.0):
+  chromadb@1.7.3(cohere-ai@7.7.5(encoding@0.1.13))(encoding@0.1.13)(openai@4.28.0(encoding@0.1.13)):
     dependencies:
       cliui: 8.0.1
-      cohere-ai: 7.7.5
-      isomorphic-fetch: 3.0.0
-      openai: 4.28.0
+      isomorphic-fetch: 3.0.0(encoding@0.1.13)
+    optionalDependencies:
+      cohere-ai: 7.7.5(encoding@0.1.13)
+      openai: 4.28.0(encoding@0.1.13)
     transitivePeerDependencies:
       - encoding
 
@@ -4599,7 +4481,7 @@ snapshots:
     dependencies:
       rfdc: 1.3.1
 
-  cohere-ai@7.7.5:
+  cohere-ai@7.7.5(encoding@0.1.13):
     dependencies:
       form-data: 4.0.0
       js-base64: 3.7.2
@@ -4725,8 +4607,6 @@ snapshots:
   detect-libc@2.0.2: {}
 
   didyoumean@1.2.2: {}
-
-  diff-match-patch@1.0.5: {}
 
   diff@5.1.0: {}
 
@@ -4869,11 +4749,12 @@ snapshots:
       '@typescript-eslint/parser': 5.62.0(eslint@8.57.0)(typescript@5.3.3)
       eslint: 8.57.0
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@5.62.0)(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.0)(eslint@8.57.0)
-      eslint-plugin-import: 2.29.0(@typescript-eslint/parser@5.62.0)(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0)
+      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.3.3))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.0(eslint@8.57.0))(eslint@8.57.0)
+      eslint-plugin-import: 2.29.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.3.3))(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0)
       eslint-plugin-jsx-a11y: 6.8.0(eslint@8.57.0)
       eslint-plugin-react: 7.33.2(eslint@8.57.0)
       eslint-plugin-react-hooks: 4.6.0(eslint@8.57.0)
+    optionalDependencies:
       typescript: 5.3.3
     transitivePeerDependencies:
       - eslint-import-resolver-webpack
@@ -4887,13 +4768,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@5.62.0)(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.0)(eslint@8.57.0):
+  eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.3.3))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.0(eslint@8.57.0))(eslint@8.57.0):
     dependencies:
       debug: 4.3.4
       enhanced-resolve: 5.15.0
       eslint: 8.57.0
-      eslint-module-utils: 2.8.0(@typescript-eslint/parser@5.62.0)(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0)
-      eslint-plugin-import: 2.29.0(@typescript-eslint/parser@5.62.0)(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0)
+      eslint-module-utils: 2.8.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.3.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.3.3))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.0(eslint@8.57.0))(eslint@8.57.0))(eslint@8.57.0)
+      eslint-plugin-import: 2.29.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.3.3))(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0)
       fast-glob: 3.3.2
       get-tsconfig: 4.7.2
       is-core-module: 2.13.1
@@ -4904,19 +4785,19 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-module-utils@2.8.0(@typescript-eslint/parser@5.62.0)(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0):
+  eslint-module-utils@2.8.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.3.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.3.3))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.0(eslint@8.57.0))(eslint@8.57.0))(eslint@8.57.0):
     dependencies:
-      '@typescript-eslint/parser': 5.62.0(eslint@8.57.0)(typescript@5.3.3)
       debug: 3.2.7
+    optionalDependencies:
+      '@typescript-eslint/parser': 5.62.0(eslint@8.57.0)(typescript@5.3.3)
       eslint: 8.57.0
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@5.62.0)(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.0)(eslint@8.57.0)
+      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.3.3))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.0(eslint@8.57.0))(eslint@8.57.0)
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.29.0(@typescript-eslint/parser@5.62.0)(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0):
+  eslint-plugin-import@2.29.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.3.3))(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0):
     dependencies:
-      '@typescript-eslint/parser': 5.62.0(eslint@8.57.0)(typescript@5.3.3)
       array-includes: 3.1.7
       array.prototype.findlastindex: 1.2.3
       array.prototype.flat: 1.3.2
@@ -4925,7 +4806,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 8.57.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.8.0(@typescript-eslint/parser@5.62.0)(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0)
+      eslint-module-utils: 2.8.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.3.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.3.3))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.0(eslint@8.57.0))(eslint@8.57.0))(eslint@8.57.0)
       hasown: 2.0.0
       is-core-module: 2.13.1
       is-glob: 4.0.3
@@ -4935,6 +4816,8 @@ snapshots:
       object.values: 1.1.7
       semver: 6.3.1
       tsconfig-paths: 3.14.2
+    optionalDependencies:
+      '@typescript-eslint/parser': 5.62.0(eslint@8.57.0)(typescript@5.3.3)
     transitivePeerDependencies:
       - eslint-import-resolver-typescript
       - eslint-import-resolver-webpack
@@ -5157,8 +5040,9 @@ snapshots:
   foxact@0.2.31(react@18.2.0):
     dependencies:
       client-only: 0.0.1
-      react: 18.2.0
       server-only: 0.0.1
+    optionalDependencies:
+      react: 18.2.0
 
   fraction.js@4.3.7: {}
 
@@ -5494,7 +5378,7 @@ snapshots:
 
   isexe@2.0.0: {}
 
-  isomorphic-fetch@3.0.0:
+  isomorphic-fetch@3.0.0(encoding@0.1.13):
     dependencies:
       node-fetch: 2.7.0(encoding@0.1.13)
       whatwg-fetch: 3.6.20
@@ -5517,17 +5401,17 @@ snapshots:
 
   jiti@1.21.0: {}
 
-  jotai-effect@0.5.0(jotai@2.6.5):
+  jotai-effect@0.5.0(jotai@2.6.5(@types/react@18.2.58)(react@18.2.0)):
     dependencies:
       jotai: 2.6.5(@types/react@18.2.58)(react@18.2.0)
 
   jotai@2.6.5(@types/react@18.2.58)(react@18.2.0):
-    dependencies:
+    optionalDependencies:
       '@types/react': 18.2.58
       react: 18.2.0
 
   jotai@2.9.3(@types/react@18.2.58)(react@18.3.1):
-    dependencies:
+    optionalDependencies:
       '@types/react': 18.2.58
       react: 18.3.1
 
@@ -5556,12 +5440,6 @@ snapshots:
   json5@1.0.2:
     dependencies:
       minimist: 1.2.8
-
-  jsondiffpatch@0.6.0:
-    dependencies:
-      '@types/diff-match-patch': 1.0.36
-      chalk: 5.3.0
-      diff-match-patch: 1.0.5
 
   jsonfile@2.4.0:
     optionalDependencies:
@@ -5614,29 +5492,29 @@ snapshots:
 
   lines-and-columns@1.2.4: {}
 
-  llamaindex@0.1.16(typescript@5.3.3):
+  llamaindex@0.1.16(encoding@0.1.13)(typescript@5.3.3):
     dependencies:
-      '@anthropic-ai/sdk': 0.13.1
+      '@anthropic-ai/sdk': 0.13.1(encoding@0.1.13)
       '@aws-crypto/sha256-js': 5.2.0
       '@datastax/astra-db-ts': 0.1.4
       '@llamaindex/cloud': 0.0.1
       '@llamaindex/env': 0.0.3
-      '@mistralai/mistralai': 0.0.10
-      '@notionhq/client': 2.2.14
+      '@mistralai/mistralai': 0.0.10(encoding@0.1.13)
+      '@notionhq/client': 2.2.14(encoding@0.1.13)
       '@pinecone-database/pinecone': 2.0.1
       '@qdrant/js-client-rest': 1.7.0(typescript@5.3.3)
       '@xenova/transformers': 2.15.1
       assemblyai: 4.3.1
-      chromadb: 1.7.3(cohere-ai@7.7.5)(openai@4.28.0)
-      cohere-ai: 7.7.5
+      chromadb: 1.7.3(cohere-ai@7.7.5(encoding@0.1.13))(encoding@0.1.13)(openai@4.28.0(encoding@0.1.13))
+      cohere-ai: 7.7.5(encoding@0.1.13)
       file-type: 18.7.0
       js-tiktoken: 1.0.10
       lodash: 4.17.21
       mammoth: 1.6.0
       md-utils-ts: 2.0.0
       mongodb: 6.3.0
-      notion-md-crawler: 0.0.2
-      openai: 4.28.0
+      notion-md-crawler: 0.0.2(encoding@0.1.13)
+      openai: 4.28.0(encoding@0.1.13)
       papaparse: 5.4.1
       pathe: 1.1.2
       pdf2json: 3.0.5
@@ -6122,7 +6000,7 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  next@14.1.0(react-dom@18.2.0)(react@18.2.0):
+  next@14.1.0(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
     dependencies:
       '@next/env': 14.1.0
       '@swc/helpers': 0.5.2
@@ -6143,6 +6021,7 @@ snapshots:
       '@next/swc-win32-arm64-msvc': 14.1.0
       '@next/swc-win32-ia32-msvc': 14.1.0
       '@next/swc-win32-x64-msvc': 14.1.0
+      '@opentelemetry/api': 1.9.0
     transitivePeerDependencies:
       - '@babel/core'
       - babel-plugin-macros
@@ -6157,8 +6036,9 @@ snapshots:
 
   node-fetch@2.7.0(encoding@0.1.13):
     dependencies:
-      encoding: 0.1.13
       whatwg-url: 5.0.0
+    optionalDependencies:
+      encoding: 0.1.13
 
   node-releases@2.0.14: {}
 
@@ -6166,9 +6046,9 @@ snapshots:
 
   normalize-range@0.1.2: {}
 
-  notion-md-crawler@0.0.2:
+  notion-md-crawler@0.0.2(encoding@0.1.13):
     dependencies:
-      '@notionhq/client': 2.2.14
+      '@notionhq/client': 2.2.14(encoding@0.1.13)
       md-utils-ts: 2.0.0
     transitivePeerDependencies:
       - encoding
@@ -6246,7 +6126,7 @@ snapshots:
       onnxruntime-common: 1.14.0
       platform: 1.3.6
 
-  openai@4.28.0:
+  openai@4.28.0(encoding@0.1.13):
     dependencies:
       '@types/node': 18.18.10
       '@types/node-fetch': 2.6.9
@@ -6393,8 +6273,9 @@ snapshots:
   postcss-load-config@4.0.2(postcss@8.4.35):
     dependencies:
       lilconfig: 3.0.0
-      postcss: 8.4.35
       yaml: 2.3.4
+    optionalDependencies:
+      postcss: 8.4.35
 
   postcss-nested@6.0.1(postcss@8.4.35):
     dependencies:
@@ -6737,7 +6618,7 @@ snapshots:
     optionalDependencies:
       '@babel/code-frame': 7.22.13
 
-  rollup-plugin-swc3@0.11.0(@swc/core@1.4.2)(rollup@4.12.0):
+  rollup-plugin-swc3@0.11.0(@swc/core@1.4.2(@swc/helpers@0.5.3))(rollup@4.12.0):
     dependencies:
       '@fastify/deepmerge': 1.3.0
       '@rollup/pluginutils': 5.1.0(rollup@4.12.0)
@@ -6901,11 +6782,6 @@ snapshots:
       svelte: 4.2.5
       swrev: 4.0.0
 
-  sswr@2.1.0(svelte@4.2.5):
-    dependencies:
-      svelte: 4.2.5
-      swrev: 4.0.0
-
   stack-trace@0.0.10: {}
 
   streamsearch@1.1.0: {}
@@ -7063,15 +6939,9 @@ snapshots:
       react: 18.2.0
       use-sync-external-store: 1.2.0(react@18.2.0)
 
-  swr@2.2.5(react@18.3.1):
-    dependencies:
-      client-only: 0.0.1
-      react: 18.3.1
-      use-sync-external-store: 1.2.0(react@18.3.1)
-
   swrev@4.0.0: {}
 
-  swrv@1.0.4(vue@3.3.8):
+  swrv@1.0.4(vue@3.3.8(typescript@5.3.3)):
     dependencies:
       vue: 3.3.8(typescript@5.3.3)
 
@@ -7310,10 +7180,6 @@ snapshots:
     dependencies:
       react: 18.2.0
 
-  use-sync-external-store@1.2.0(react@18.3.1):
-    dependencies:
-      react: 18.3.1
-
   util-deprecate@1.0.2: {}
 
   uvu@0.5.6:
@@ -7352,18 +7218,10 @@ snapshots:
       '@vue/compiler-dom': 3.3.8
       '@vue/compiler-sfc': 3.3.8
       '@vue/runtime-dom': 3.3.8
-      '@vue/server-renderer': 3.3.8(vue@3.3.8)
+      '@vue/server-renderer': 3.3.8(vue@3.3.8(typescript@5.3.3))
       '@vue/shared': 3.3.8
+    optionalDependencies:
       typescript: 5.3.3
-
-  vue@3.3.8(typescript@5.5.4):
-    dependencies:
-      '@vue/compiler-dom': 3.3.8
-      '@vue/compiler-sfc': 3.3.8
-      '@vue/runtime-dom': 3.3.8
-      '@vue/server-renderer': 3.3.8(vue@3.3.8)
-      '@vue/shared': 3.3.8
-      typescript: 5.5.4
 
   web-streams-polyfill@3.2.1: {}
 
