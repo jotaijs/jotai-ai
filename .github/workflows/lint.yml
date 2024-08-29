@@ -1,14 +1,12 @@
-name: Build
+name: Lint
 
 on:
   push:
-    branches: [main]
   pull_request:
-    branches: [main]
 
 jobs:
-  build:
-    name: Build
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,5 +19,5 @@ jobs:
           cache: "pnpm"
       - name: Install dependencies
         run: pnpm install
-      - name: Build
-        run: pnpm run build
+      - name: Lint
+        run: pnpm run lint
