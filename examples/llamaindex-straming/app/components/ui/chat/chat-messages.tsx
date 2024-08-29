@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 
 import ChatActions from "./chat-actions";
 import ChatMessage from "./chat-message";
-import { ChatHandler } from "./chat.interface";
+import type { ChatHandler } from "./chat.interface";
 
 export default function ChatMessages(
   props: Pick<

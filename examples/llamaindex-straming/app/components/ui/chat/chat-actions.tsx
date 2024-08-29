@@ -1,7 +1,7 @@
 import { PauseCircle, RefreshCw, Eraser } from "lucide-react";
 
 import { Button } from "../button";
-import { ChatHandler } from "./chat.interface";
+import type { ChatHandler } from "./chat.interface";
 
 export default function ChatActions(
   props: Pick<ChatHandler, "stop" | "reload" | "clear"> & {

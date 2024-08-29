@@ -428,7 +428,7 @@ export function chatAtoms(
 
         // Remove the last assistant message and retry the last user message.
         const lastMessage = messages[messages.length - 1];
-        if (lastMessage.role === "assistant") {
+        if (lastMessage!.role === "assistant") {
           const chatRequest: ChatRequest = {
             messages: messages.slice(0, -1),
             options: requestOptions,

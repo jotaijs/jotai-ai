@@ -33,7 +33,7 @@ export function isAssistantMessageWithCompletedToolCalls(message: Message) {
 export function countTrailingAssistantMessages(messages: Message[]) {
   let count = 0;
   for (let i = messages.length - 1; i >= 0; i--) {
-    if (messages[i].role === "assistant") {
+    if (messages[i]?.role === "assistant") {
       count++;
     } else {
       break;

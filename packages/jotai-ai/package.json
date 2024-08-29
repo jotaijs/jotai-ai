@@ -1,0 +1,47 @@
+{
+  "name": "jotai-ai",
+  "version": "0.0.7",
+  "type": "module",
+  "module": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "src",
+    "dist"
+  ],
+  "scripts": {
+    "build": "bunchee",
+    "dev": "bunchee --watch",
+    "lint": "prettier --c .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ai",
+    "openai",
+    "jotai",
+    "chatbot",
+    "ai-sdk"
+  ],
+  "author": "himself65 <himself65@outlook.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/react": "18.3.4",
+    "bunchee": "4.4.8",
+    "jotai": "2.9.3",
+    "prettier": "^3.3.3",
+    "react": "18.3.1",
+    "typescript": "5.5.4"
+  },
+  "peerDependencies": {
+    "jotai": ">=2.5.1"
+  },
+  "dependencies": {
+    "@ai-sdk/provider-utils": "^1.0.17",
+    "@ai-sdk/ui-utils": "^0.0.39"
+  }
+}
