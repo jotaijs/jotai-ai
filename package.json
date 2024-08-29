@@ -14,7 +14,7 @@
     "src",
     "dist"
   ],
-  "packageManager": "pnpm@8.15.3",
+  "packageManager": "pnpm@9.9.0",
   "scripts": {
     "build": "bunchee",
     "dev": "bunchee --watch",
@@ -29,14 +29,14 @@
   "license": "MIT",
   "devDependencies": {
     "@types/react": "18.2.58",
-    "ai": "2.2.36",
+    "ai": "^3.3.20",
     "bunchee": "4.4.8",
-    "jotai": "2.6.5",
-    "react": "18.2.0",
-    "typescript": "5.3.3"
+    "jotai": "2.9.3",
+    "react": "18.3.1",
+    "typescript": "5.5.4"
   },
   "peerDependencies": {
-    "ai": ">=2.2.24",
+    "ai": ">=2.2.24 || >=3.3.20",
     "jotai": ">=2.5.1"
   }
 }
