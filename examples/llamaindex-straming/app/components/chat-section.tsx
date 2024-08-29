@@ -7,7 +7,7 @@ import { ChatInput, ChatMessages } from "./ui/chat";
 import { useAtom, useAtomValue, useSetAtom } from "jotai/react";
 import { Suspense } from "react";
 import { atom } from "jotai/vanilla";
-import { Message } from "ai";
+import type { Message } from "ai";
 
 const {
   messagesAtom,
@@ -24,11 +24,11 @@ const {
   },
 });
 
-const clearMessagesAtom = atom(null, async (get, set) =>
+const clearMessagesAtom = atom(null, async (_get, set) =>
   set(messagesAtom, [] as Message[]),
 );
 
-const saveMessagesEffectAtom = atomEffect((get, set) => {
+const saveMessagesEffectAtom = atomEffect((get, _set) => {
   const messages = get(messagesAtom);
   const idbPromise = import("idb-keyval");
   const abortController = new AbortController();

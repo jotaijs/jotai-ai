@@ -1,8 +1,8 @@
 "use client";
 
-import React, { FC, memo } from "react";
+import React, { type FC, memo } from "react";
 import { Check, Copy, Download } from "lucide-react";
-import { Prism, SyntaxHighlighterProps } from "react-syntax-highlighter";
+import { Prism, type SyntaxHighlighterProps } from "react-syntax-highlighter";
 import { coldarkDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
 
 import { Button } from "../button";

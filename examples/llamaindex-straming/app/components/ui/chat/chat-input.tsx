@@ -1,6 +1,6 @@
 import { Button } from "../button";
 import { Input } from "../input";
-import { ChatHandler } from "./chat.interface";
+import type { ChatHandler } from "./chat.interface";
 
 export default function ChatInput(
   props: Pick<

@@ -2,7 +2,7 @@ import { Check, Copy } from "lucide-react";
 
 import { Button } from "../button";
 import ChatAvatar from "./chat-avatar";
-import { Message } from "./chat.interface";
+import type { Message } from "./chat.interface";
 import Markdown from "./markdown";
 import { useCopyToClipboard } from "./use-copy-to-clipboard";
 

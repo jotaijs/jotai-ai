@@ -28,6 +28,6 @@ export function LlamaIndexStream(
   return createParser(res)
     .pipeThrough(createCallbacksTransformer(callbacks))
     .pipeThrough(
-      createStreamDataTransformer(callbacks?.experimental_streamData),
+      createStreamDataTransformer(),
     );
 }
