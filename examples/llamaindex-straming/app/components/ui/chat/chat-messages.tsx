@@ -5,7 +5,10 @@ import ChatMessage from "./chat-message";
 import { ChatHandler } from "./chat.interface";
 
 export default function ChatMessages(
-  props: Pick<ChatHandler, "messages" | "isLoading" | "reload" | "stop" | "clear">,
+  props: Pick<
+    ChatHandler,
+    "messages" | "isLoading" | "reload" | "stop" | "clear"
+  >,
 ) {
   const scrollableChatContainerRef = useRef<HTMLDivElement>(null);
   const messageLength = props.messages.length;
