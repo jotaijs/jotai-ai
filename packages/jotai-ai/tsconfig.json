@@ -7,7 +7,10 @@
     "target": "ES2018",
     "lib": ["ESNext", "DOM", "DOM.Iterable", "DOM.AsyncIterable"],
     "verbatimModuleSyntax": true,
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "types": [
+      "react/experimental",
+    ]
   },
   "include": ["src"]
 }
