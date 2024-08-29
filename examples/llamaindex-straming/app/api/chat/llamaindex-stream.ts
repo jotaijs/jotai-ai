@@ -27,7 +27,5 @@ export function LlamaIndexStream(
 ): ReadableStream {
   return createParser(res)
     .pipeThrough(createCallbacksTransformer(callbacks))
-    .pipeThrough(
-      createStreamDataTransformer(),
-    );
+    .pipeThrough(createStreamDataTransformer());
 }
