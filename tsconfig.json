@@ -1,11 +1,32 @@
 {
   "compilerOptions": {
     "strict": true,
-    "strictNullChecks": true,
-    "module": "ESNext",
-    "target": "ES2018",
+    "target": "ESNext",
+    "downlevelIteration": true,
+    "esModuleInterop": true,
+    "module": "NodeNext",
+    "skipLibCheck": true,
     "verbatimModuleSyntax": true,
-    "moduleResolution": "bundler"
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noUncheckedIndexedAccess": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "composite": true,
+    "incremental": true
   },
+  "references": [
+    {
+      "path": "./examples/llamaindex-straming"
+    },
+    {
+      "path": "./examples/waku-chat"
+    },
+    {
+      "path": "./packages/jotai-ai"
+    }
+  ],
   "exclude": ["node_modules"]
 }
