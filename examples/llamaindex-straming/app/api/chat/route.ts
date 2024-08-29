@@ -1,4 +1,4 @@
-import { Message, StreamingTextResponse } from "ai";
+import { type Message, StreamingTextResponse } from "ai";
 import { OpenAI } from "llamaindex";
 import { NextRequest, NextResponse } from "next/server";
 import { createChatEngine } from "./engine";
