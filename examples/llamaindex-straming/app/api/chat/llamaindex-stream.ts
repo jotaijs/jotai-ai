@@ -4,7 +4,7 @@ import {
   trimStartOfStreamHelper,
   type AIStreamCallbacksAndOptions,
 } from "ai";
-import type { Response } from 'llamaindex'
+import type { Response } from "llamaindex";
 
 function createParser(res: AsyncIterable<Response>) {
   const trimStartOfStream = trimStartOfStreamHelper();

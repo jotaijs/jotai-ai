@@ -1,13 +1,15 @@
-import type { Message } from '@ai-sdk/ui-utils'
+import type { Message } from "@ai-sdk/ui-utils";
 
-export const isPromiseLike = (value: unknown): value is PromiseLike<unknown> => {
+export const isPromiseLike = (
+  value: unknown,
+): value is PromiseLike<unknown> => {
   return (
-    typeof value === 'object' &&
+    typeof value === "object" &&
     value !== null &&
-    'then' in value &&
-    typeof (value as any).then === 'function'
-  )
-}
+    "then" in value &&
+    typeof (value as any).then === "function"
+  );
+};
 
 /**
  Check if the message is an assistant message with completed tool calls.
@@ -16,13 +18,14 @@ export const isPromiseLike = (value: unknown): value is PromiseLike<unknown> => 
  */
 export function isAssistantMessageWithCompletedToolCalls(message: Message) {
   return (
-    message.role === 'assistant' &&
+    message.role === "assistant" &&
     message.toolInvocations &&
     message.toolInvocations.length > 0 &&
-    message.toolInvocations.every(toolInvocation => 'result' in toolInvocation)
+    message.toolInvocations.every(
+      (toolInvocation) => "result" in toolInvocation,
+    )
   );
 }
-
 
 /**
  Returns the number of trailing assistant messages in the array.
@@ -30,7 +33,7 @@ export function isAssistantMessageWithCompletedToolCalls(message: Message) {
 export function countTrailingAssistantMessages(messages: Message[]) {
   let count = 0;
   for (let i = messages.length - 1; i >= 0; i--) {
-    if (messages[i].role === 'assistant') {
+    if (messages[i].role === "assistant") {
       count++;
     } else {
       break;
