@@ -9,11 +9,10 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
-    "./react": {
-      "types": "./dist/react/index.d.ts",
-      "import": "./dist/react/index.js",
-      "react-server": "./dist/react/index.server.js",
-      "require": "./dist/react/index.cjs"
+    "./rsc": {
+      "types": "./dist/rsc/index.d.ts",
+      "react-server": "./dist/rsc/index.server.js",
+      "import": "./dist/rsc/index.js"
     }
   },
   "files": [
@@ -44,7 +43,8 @@
     "typescript": "5.5.4"
   },
   "peerDependencies": {
-    "jotai": ">=2.5.1"
+    "jotai": ">=2.5.1",
+    "react": "^18.3.1 || ^19"
   },
   "dependencies": {
     "@ai-sdk/provider-utils": "^1.0.17",
