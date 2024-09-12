@@ -369,6 +369,26 @@ export function chatAtoms(
         set(inputBaseAtom, event.target.value);
       },
     ),
+    appendAtom: atom(
+      (get) => get(isLoadingAtom),
+      async (
+        get,
+        set,
+        message: Message | CreateMessage,
+        options: ChatRequestOptions = {},
+        metadata?: Metadata,
+      ) => {
+        if (metadata) {
+          set(metadataAtom, (prevMetadata) => ({
+            ...prevMetadata,
+            ...metadata,
+          }));
+        }
+        return append(get, set, message, options).catch((err) =>
+          onError(get, set, err),
+        );
+      },
+    ),
     submitAtom: atom(
       (get) => get(isLoadingAtom),
       (
