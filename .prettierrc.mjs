@@ -5,5 +5,5 @@ const config = {
   semi: true,
   singleQuote: true,
   arrowParens: 'avoid',
-}
-export default config
+};
+export default config;

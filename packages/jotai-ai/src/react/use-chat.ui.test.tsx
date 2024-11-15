@@ -19,6 +19,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useChat } from './use-chat';
 
+// adapt and modified from https://github.com/vercel/ai/blob/main/packages/react/src/use-chat.ui.test.tsx
 describe('data protocol stream', () => {
   let onFinishCalls: {
     message: Message;
