@@ -18,7 +18,8 @@
     "build": "bunchee",
     "dev": "bunchee --watch",
     "lint": "prettier --c .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "ui-test": "vitest --config vitest.ui.config.ts"
   },
   "keywords": [
     "ai",
@@ -30,18 +31,26 @@
   "author": "himself65 <himself65@outlook.com>",
   "license": "MIT",
   "devDependencies": {
+    "@ai-sdk/provider": "^0.0.26",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.0.1",
+    "@testing-library/user-event": "^14.5.2",
     "@types/react": "18.3.4",
+    "@vitejs/plugin-react": "^4.3.3",
+    "ai": "^3.4.33",
     "bunchee": "4.4.8",
     "jotai": "2.9.3",
     "prettier": "^3.3.3",
     "react": "18.3.1",
-    "typescript": "5.5.4"
+    "typescript": "5.5.4",
+    "vitest": "^2.1.5"
   },
   "peerDependencies": {
     "jotai": ">=2.5.1"
   },
   "dependencies": {
-    "@ai-sdk/provider-utils": "^1.0.17",
+    "@ai-sdk/provider-utils": "^1.0.22",
     "@ai-sdk/ui-utils": "^0.0.39"
   }
 }

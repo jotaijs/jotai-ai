@@ -1,2 +1,4 @@
 pnpm-lock.yaml
 dist
+examples/llamaindex-straming
+packages/jotai-ai/src/chatAtoms.ts
