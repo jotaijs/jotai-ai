@@ -160,9 +160,7 @@ export const {
   onResponseAtom,
   onToolCallAtom,
   onFinishAtom,
-} = makeChatAtoms({
-  messagesAtom,
-});
+} = makeChatAtoms({ messagesAtom });
 
 export const useChat = (opts: UseChatOptions): UseChatReturn => {
   const [input, setInput] = useAtom(inputAtom);
