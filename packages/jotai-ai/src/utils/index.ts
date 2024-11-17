@@ -2,7 +2,6 @@ import type { Attachment, Message } from '@ai-sdk/ui-utils';
 import type { CoreMessage, CoreToolMessage, ToolInvocation } from 'ai';
 
 import { generateId as defaultGenerateId } from '@ai-sdk/ui-utils';
-import { convertToCoreMessages } from 'ai';
 
 export { defaultGenerateId };
 

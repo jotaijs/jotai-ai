@@ -38,7 +38,6 @@ describe('data protocol stream', () => {
     const { messages, append, error, isLoading, data, setData } = useChat({
       id,
       onFinish: (message, options) => {
-        console.error('onFinish real handler', message, options);
         onFinishCalls.push({ message, options });
       },
     });

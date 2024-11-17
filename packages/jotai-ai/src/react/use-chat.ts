@@ -199,7 +199,6 @@ export const useChat = (opts: UseChatOptions): UseChatReturn => {
       };
       append(userMessage, options).catch((error: Error) => {
         // TODO: not implemented
-        console.error(error);
       });
       setInput('');
     },
@@ -212,7 +211,7 @@ export const useChat = (opts: UseChatOptions): UseChatReturn => {
     // firstTokenReceived,
     error,
 
-    //
+    // user interface
     messages,
     setMessages,
     data,
@@ -222,7 +221,6 @@ export const useChat = (opts: UseChatOptions): UseChatReturn => {
     setInput,
     handleSubmit,
 
-    //
     append,
     reload,
     stop,

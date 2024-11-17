@@ -257,11 +257,8 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
       restoreMessagesOnFailure: () => undefined,
       onResponse: response => get(onResponseAtom)?.(response),
       onFinish: (message, options) => {
-        console.error('onFinish,', message, options);
-        console.error('onFinishAtom', typeof get(onFinishAtom));
         const onFinish = get(onFinishAtom);
         if (onFinish) {
-          console.error('Error ????????');
           onFinish(message, options);
         }
       },
