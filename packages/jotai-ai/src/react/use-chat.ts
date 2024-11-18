@@ -1,3 +1,4 @@
+'use client';
 import type {
   ChatRequestOptions,
   CreateMessage,
@@ -7,7 +8,13 @@ import type {
 } from 'ai';
 import type { Handlers } from '../make-chat-atoms';
 
-import { useCallback } from 'react';
+import {
+  useCallback,
+  createContext,
+  useContext,
+  createElement,
+  type ReactNode,
+} from 'react';
 
 import { atom, useSetAtom } from 'jotai';
 import { useAtom } from 'jotai-lazy';
@@ -145,25 +152,49 @@ export type UseChatReturn = {
 const messagesAtom = atom<Message[]>([]);
 const inputAtom = atom<string>('');
 
-export const {
-  // data containers,
-  isLoadingAtom,
-  errorAtom,
-  dataAtom,
+const defaultChatAtoms = makeChatAtoms({ messagesAtom });
 
-  // actions
-  stopAtom,
-  appendAtom,
-  reloadAtom,
+const ChatAtomsContext = createContext<ReturnType<typeof makeChatAtoms> | null>(
+  null,
+);
 
-  // handlers
-  onErrorAtom,
-  onResponseAtom,
-  onToolCallAtom,
-  onFinishAtom,
-} = makeChatAtoms({ messagesAtom });
+/**
+ * @internal
+ */
+const useChatAtoms = () => {
+  const context = useContext(ChatAtomsContext);
+  if (!context) {
+    return defaultChatAtoms;
+  }
+  return context;
+};
+
+export const ChatAtomsProvider = ({
+  children,
+  value,
+}: {
+  value: ReturnType<typeof makeChatAtoms>;
+  children: ReactNode;
+}) => {
+  return createElement(ChatAtomsContext.Provider, {
+    value,
+    children,
+  });
+};
 
 export const useChat = (opts: UseChatOptions): UseChatReturn => {
+  const {
+    appendAtom,
+    dataAtom,
+    errorAtom,
+    isLoadingAtom,
+    onErrorAtom,
+    onResponseAtom,
+    onFinishAtom,
+    onToolCallAtom,
+    reloadAtom,
+    stopAtom,
+  } = useChatAtoms();
   const inputObject = useAtom(inputAtom);
   const messagesObject = useAtom(messagesAtom);
 
@@ -238,4 +269,35 @@ export const useChat = (opts: UseChatOptions): UseChatReturn => {
     reload,
     stop,
   };
+};
+
+const {
+  // data containers,
+  isLoadingAtom,
+  errorAtom,
+  dataAtom,
+
+  // actions
+  stopAtom,
+  appendAtom,
+  reloadAtom,
+
+  // handlers
+  onErrorAtom,
+  onResponseAtom,
+  onToolCallAtom,
+  onFinishAtom,
+} = defaultChatAtoms;
+
+export {
+  isLoadingAtom,
+  errorAtom,
+  dataAtom,
+  stopAtom,
+  appendAtom,
+  reloadAtom,
+  onErrorAtom,
+  onResponseAtom,
+  onToolCallAtom,
+  onFinishAtom,
 };

@@ -206,6 +206,54 @@ const App = () => {
 };
 ```
 
+## makeChatAtoms
+
+`makeChatAtoms` is a function that creates a set of atoms for a chatbot from `messagesAtom`.
+
+```typescript
+import { makeChatAtoms } from 'jotai-ai';
+
+const messagesAtom = atom<Message[]>([]);
+
+const {
+  // state data containers,
+  isLoadingAtom,
+  errorAtom,
+  dataAtom,
+
+  // actions
+  stopAtom,
+  appendAtom,
+  reloadAtom,
+
+  // handlers
+  onErrorAtom,
+  onResponseAtom,
+  onToolCallAtom,
+  onFinishAtom,
+} = makeChatAtoms({ messagesAtom });
+```
+
+## useChat
+
+`useChat` is the equivalent of vercel `ai`'s `useChat` hook.
+
+```tsx
+import { useChat } from 'jotai-ai/react';
+
+export const App = () => {
+  const { messages, isPending } = useChat();
+  return (
+    <div>
+      {isPending && <p>Loading...</p>}
+      {messages.map((message) => (
+        <p key={message.id}>{message.text}</p>
+      ))}
+    </div>
+  );
+};
+```
+
 ## LICENSE
 
 [MIT](LICENSE)
