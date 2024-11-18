@@ -1,2 +1,2 @@
-export { chatAtoms } from './chatAtoms';
+export { chatAtoms } from './chat-atoms';
 export { makeChatAtoms } from './make-chat-atoms';
