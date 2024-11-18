@@ -17,8 +17,8 @@ yarn add ai jotai-ai
 `chatAtoms` is a collection of atoms for a chatbot like [`useChat`](https://sdk.vercel.ai/docs/api-reference/use-chat).
 
 ```js
-import { useAtomValue, useAtom, useSetAtom } from "jotai";
-import { chatAtoms } from "jotai-ai";
+import { useAtomValue, useAtom, useSetAtom } from 'jotai';
+import { chatAtoms } from 'jotai-ai';
 
 const { messagesAtom, inputAtom, submitAtom, isLoadingAtom } = chatAtoms();
 
@@ -27,9 +27,9 @@ function Messages() {
   return (
     <>
       {messages.length > 0
-        ? messages.map((m) => (
+        ? messages.map(m => (
             <div key={m.id} className="whitespace-pre-wrap">
-              {m.role === "user" ? "User: " : "AI: "}
+              {m.role === 'user' ? 'User: ' : 'AI: '}
               {m.content}
             </div>
           ))
@@ -104,9 +104,9 @@ const Messages = () => {
   const messages = useAtomValue(messagesAtom);
   return (
     <div>
-      {messages.map((m) => (
+      {messages.map(m => (
         <div key={m.id} className="whitespace-pre-wrap">
-          {m.role === "user" ? "User: " : "AI: "}
+          {m.role === 'user' ? 'User: ' : 'AI: '}
           {m.content}
         </div>
       ))}
@@ -119,8 +119,8 @@ const UserMessages = () => {
   return (
     <div>
       {messages
-        .filter((m) => m.role === "user")
-        .map((m) => (
+        .filter(m => m.role === 'user')
+        .map(m => (
           <div key={m.id} className="whitespace-pre-wrap">
             User: {m.content}
           </div>
@@ -156,22 +156,22 @@ const { messagesAtom } = chatAtoms({
      * @link https://foxact.skk.moe/no-ssr
      */
     // noSSR()
-    const idb = await import("idb-keyval");
-    return (await idb.get("messages")) ?? [];
+    const idb = await import('idb-keyval');
+    return (await idb.get('messages')) ?? [];
   },
 });
 
-import { atomEffect } from "jotai-effect";
+import { atomEffect } from 'jotai-effect';
 
 const saveMessagesEffectAtom = atomEffect((get, set) => {
   const messages = get(messagesAtom);
-  const idbPromise = import("idb-keyval");
+  const idbPromise = import('idb-keyval');
   const abortController = new AbortController();
-  idbPromise.then(async (idb) => {
+  idbPromise.then(async idb => {
     if (abortController.signal.aborted) {
       return;
     }
-    await idb.set("messages", await messages);
+    await idb.set('messages', await messages);
   });
   return () => {
     abortController.abort();
@@ -183,9 +183,9 @@ const Messages = () => {
   return (
     <>
       {messages.length > 0
-        ? messages.map((m) => (
+        ? messages.map(m => (
             <div key={m.id} className="whitespace-pre-wrap">
-              {m.role === "user" ? "User: " : "AI: "}
+              {m.role === 'user' ? 'User: ' : 'AI: '}
               {m.content}
             </div>
           ))
