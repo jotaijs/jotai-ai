@@ -1,4 +1,4 @@
-import { atom, type Getter, type Setter } from "jotai/vanilla";
+import { atom, type Getter, type Setter } from 'jotai/vanilla';
 import {
   type ChatRequest,
   type ChatRequestOptions,
@@ -8,24 +8,24 @@ import {
   type JSONValue,
   type Message,
   type UseChatOptions,
-} from "@ai-sdk/ui-utils";
+} from '@ai-sdk/ui-utils';
 import {
   countTrailingAssistantMessages,
   isAssistantMessageWithCompletedToolCalls,
   isPromiseLike,
-} from "./utils";
-import type { FormEvent } from "react";
-import type { FetchFunction } from "@ai-sdk/provider-utils";
-import { generateId as generateIdImpl } from "@ai-sdk/provider-utils";
+} from './utils';
+import type { FormEvent } from 'react';
+import type { FetchFunction } from '@ai-sdk/provider-utils';
+import { generateId as generateIdImpl } from '@ai-sdk/provider-utils';
 
 export function chatAtoms(
   chatOptions: Omit<
     UseChatOptions,
-    | "onFinish"
-    | "onResponse"
-    | "onError"
-    | "experimental_onFunctionCall"
-    | "initialMessages"
+    | 'onFinish'
+    | 'onResponse'
+    | 'onError'
+    | 'experimental_onFunctionCall'
+    | 'initialMessages'
   > & {
     onFinish?: (get: Getter, set: Setter, message: Message) => void;
     onResponse?: (
@@ -59,9 +59,9 @@ export function chatAtoms(
       get: Getter,
       set: Setter,
       ...args: Parameters<
-        Required<UseChatOptions>["experimental_onFunctionCall"]
+        Required<UseChatOptions>['experimental_onFunctionCall']
       >
-    ) => ReturnType<Required<UseChatOptions>["experimental_onFunctionCall"]>;
+    ) => ReturnType<Required<UseChatOptions>['experimental_onFunctionCall']>;
     // if you pass async function or promise, you will need a suspense boundary
     initialMessages?:
       | Message[]
@@ -69,21 +69,21 @@ export function chatAtoms(
       | (() => Message[] | Promise<Message[]>);
   } = {},
 ) {
-  const api = chatOptions.api || "/api/chat";
+  const api = chatOptions.api || '/api/chat';
   const sendExtraMessageFields = chatOptions.sendExtraMessageFields || false;
   const initialMessages = chatOptions.initialMessages || [];
   const maxToolRoundtrips = chatOptions.maxToolRoundtrips || 0;
   const generateId = chatOptions.generateId || generateIdImpl;
 
   const primitiveMessagesAtom = atom<Message[] | Promise<Message[]> | null>(
-    typeof initialMessages === "function" ? null : initialMessages,
+    typeof initialMessages === 'function' ? null : initialMessages,
   );
   const messagesAtom = atom<
     Message[] | Promise<Message[]>,
     [messages: Message[] | Promise<Message[]>],
     void
   >(
-    (get) => {
+    get => {
       const messages = get(primitiveMessagesAtom);
       if (messages === null) {
         return (initialMessages as () => Message[] | Promise<Message[]>)();
@@ -96,14 +96,14 @@ export function chatAtoms(
     },
   );
   const dataAtom = atom<JSONValue[] | undefined>(undefined);
-  const inputBaseAtom = atom(chatOptions.initialInput || "");
+  const inputBaseAtom = atom(chatOptions.initialInput || '');
 
   const abortControllerAtom = atom<AbortController>(new AbortController());
   const isLoadingAtom = atom(false);
 
   type Metadata = {
     fetch?: FetchFunction;
-    streamProtocol?: "data" | "text" | undefined;
+    streamProtocol?: 'data' | 'text' | undefined;
     credentials?: RequestCredentials;
     headers?: HeadersInit;
     body?: Record<string, any>;
@@ -187,14 +187,14 @@ export function chatAtoms(
         ...chatRequest.options?.headers,
       },
       credentials: metadata.credentials,
-      onResponse: (response) => chatOptions.onResponse?.(get, set, response),
+      onResponse: response => chatOptions.onResponse?.(get, set, response),
       restoreMessagesOnFailure: () => {},
-      onFinish: (message) => chatOptions.onFinish?.(get, set, message),
+      onFinish: message => chatOptions.onFinish?.(get, set, message),
       fetch: metadata.fetch,
       onToolCall: chatOptions.onToolCall,
       onUpdate: (merged: Message[], data: JSONValue[] | undefined): void => {
         set(messagesAtom, [...chatRequest.messages, ...merged]);
-        set(dataAtom, (existingData) => [
+        set(dataAtom, existingData => [
           ...(existingData ?? []),
           ...(data ?? []),
         ]);
@@ -225,7 +225,7 @@ export function chatAtoms(
           const messages = get(messagesAtom);
           if (messages instanceof Promise) {
             throw new Error(
-              "Cannot get current messages while messages are still loading",
+              'Cannot get current messages while messages are still loading',
             );
           }
           return messages;
@@ -246,7 +246,7 @@ export function chatAtoms(
       });
     } catch (err) {
       // Ignore abort errors as they are expected.
-      if ((err as any).name === "AbortError") {
+      if ((err as any).name === 'AbortError') {
         set(abortControllerAtom, new AbortController());
         return null;
       }
@@ -331,7 +331,7 @@ export function chatAtoms(
   // user side atoms
   return {
     messagesAtom: atom(
-      (get) => get(messagesAtom),
+      get => get(messagesAtom),
       async (get, set, messages: Message[]): Promise<void> => {
         const prevMessages = get(messagesAtom);
         if (isPromiseLike(prevMessages)) {
@@ -344,19 +344,17 @@ export function chatAtoms(
         }
       },
     ),
-    dataAtom: atom((get) => get(dataAtom)),
-    isLoadingAtom: atom((get) => get(isLoadingAtom)),
-    isPendingAtom: atom((get) => {
+    dataAtom: atom(get => get(dataAtom)),
+    isLoadingAtom: atom(get => get(isLoadingAtom)),
+    isPendingAtom: atom(get => {
       const messages = get(messagesAtom);
       if (isPromiseLike(messages)) {
-        return messages.then(
-          (messages) => messages.at(-1)?.role !== "assistant",
-        );
+        return messages.then(messages => messages.at(-1)?.role !== 'assistant');
       }
-      return messages.at(-1)?.role !== "assistant";
+      return messages.at(-1)?.role !== 'assistant';
     }),
     inputAtom: atom(
-      (get) => get(inputBaseAtom),
+      get => get(inputBaseAtom),
       (
         _get,
         set,
@@ -370,7 +368,7 @@ export function chatAtoms(
       },
     ),
     appendAtom: atom(
-      (get) => get(isLoadingAtom),
+      get => get(isLoadingAtom),
       async (
         get,
         set,
@@ -379,18 +377,18 @@ export function chatAtoms(
         metadata?: Metadata,
       ) => {
         if (metadata) {
-          set(metadataAtom, (prevMetadata) => ({
+          set(metadataAtom, prevMetadata => ({
             ...prevMetadata,
             ...metadata,
           }));
         }
-        return append(get, set, message, options).catch((err) =>
+        return append(get, set, message, options).catch(err =>
           onError(get, set, err),
         );
       },
     ),
     submitAtom: atom(
-      (get) => get(isLoadingAtom),
+      get => get(isLoadingAtom),
       (
         get,
         set,
@@ -399,7 +397,7 @@ export function chatAtoms(
         metadata?: Object,
       ) => {
         if (metadata) {
-          set(metadataAtom, (prevMetadata) => ({
+          set(metadataAtom, prevMetadata => ({
             ...prevMetadata,
             ...metadata,
           }));
@@ -412,13 +410,13 @@ export function chatAtoms(
           set,
           {
             content: input,
-            role: "user",
+            role: 'user',
             createdAt: new Date(),
           },
           options,
-        ).catch((err) => onError(get, set, err));
+        ).catch(err => onError(get, set, err));
         // clear input
-        set(inputBaseAtom, "");
+        set(inputBaseAtom, '');
         return promise;
       },
     ),
@@ -448,7 +446,7 @@ export function chatAtoms(
 
         // Remove the last assistant message and retry the last user message.
         const lastMessage = messages[messages.length - 1];
-        if (lastMessage!.role === "assistant") {
+        if (lastMessage!.role === 'assistant') {
           const chatRequest: ChatRequest = {
             messages: messages.slice(0, -1),
             options: requestOptions,
@@ -479,7 +477,7 @@ export function chatAtoms(
         return triggerRequest(get, set, chatRequest);
       },
     ),
-    stopAtom: atom(null, (get) => {
+    stopAtom: atom(null, get => {
       get(abortControllerAtom).abort();
     }),
   };

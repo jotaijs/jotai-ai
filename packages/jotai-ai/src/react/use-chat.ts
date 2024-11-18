@@ -9,7 +9,8 @@ import type { Handlers } from '../make-chat-atoms';
 
 import { useCallback } from 'react';
 
-import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { atom, useSetAtom } from 'jotai';
+import { useAtom } from 'jotai-lazy';
 
 import { makeChatAtoms } from '../make-chat-atoms';
 
@@ -163,12 +164,12 @@ export const {
 } = makeChatAtoms({ messagesAtom });
 
 export const useChat = (opts: UseChatOptions): UseChatReturn => {
-  const [input, setInput] = useAtom(inputAtom);
-  const [messages, setMessages] = useAtom(messagesAtom);
+  const inputObject = useAtom(inputAtom);
+  const messagesObject = useAtom(messagesAtom);
 
-  const [data, setData] = useAtom(dataAtom);
-  const isLoading = useAtomValue(isLoadingAtom);
-  const error = useAtomValue(errorAtom);
+  const dataObject = useAtom(dataAtom);
+  const isLoadingObject = useAtom(isLoadingAtom);
+  const errorObject = useAtom(errorAtom);
 
   const append = useSetAtom(appendAtom);
   const reload = useSetAtom(reloadAtom);
@@ -188,8 +189,10 @@ export const useChat = (opts: UseChatOptions): UseChatReturn => {
     (
       event?: { preventDefault?: () => void },
       options: ChatRequestOptions = {},
-      metadata?: object,
+      _metadata?: object,
     ) => {
+      const input = inputObject[0];
+      const setInput = inputObject[1];
       event?.preventDefault?.();
       if (!input && !options.allowEmptySubmit) return;
 
@@ -197,28 +200,38 @@ export const useChat = (opts: UseChatOptions): UseChatReturn => {
         content: input,
         role: 'user' as const,
       };
-      append(userMessage, options).catch((error: Error) => {
+      append(userMessage, options).catch((_error: Error) => {
         // TODO: not implemented
       });
       setInput('');
     },
-    [input],
+    [],
   );
 
   return {
     // state
-    isLoading,
+    get isLoading() {
+      return isLoadingObject[0];
+    },
     // firstTokenReceived,
-    error,
+    get error() {
+      return errorObject[0];
+    },
 
     // user interface
-    messages,
-    setMessages,
-    data,
-    setData,
+    get messages() {
+      return messagesObject[0];
+    },
+    setMessages: messagesObject[1],
+    get data() {
+      return dataObject[0];
+    },
+    setData: dataObject[1],
 
-    input,
-    setInput,
+    get input() {
+      return inputObject[0];
+    },
+    setInput: inputObject[1],
     handleSubmit,
 
     append,
