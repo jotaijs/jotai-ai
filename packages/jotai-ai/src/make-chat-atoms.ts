@@ -49,6 +49,11 @@ type ExtraMetadata = {
   body?: Record<string, JSONValue>;
 };
 
+/* internal */
+type FnObj<T> = {
+  fn: T;
+};
+
 type AtomHandlers = {
   onResponse?: (get: Getter, set: Setter, response: Response) => void;
   onError?: (get: Getter, set: Setter, error: Error) => void;
@@ -163,12 +168,13 @@ export type MakeChatAtomsOptions = {
 export function makeChatAtoms(opts: MakeChatAtomsOptions) {
   const api = opts.api ?? '/api/chat';
   const generateId = opts.generateId ?? defaultGenerateId;
-  const maxSteps = opts.maxSteps ?? 1;
-  const streamProtocol = opts.streamProtocol ?? 'data';
+
+  const maxStepsAtom = atom(opts.maxSteps ?? 1);
+  const streamProtocolAtom = atom(opts.streamProtocol ?? 'data');
 
   const prepareRequestBodyAtom = atom<
-    MakeChatAtomsOptions['experimental_prepareRequestBody']
-  >(opts.experimental_prepareRequestBody);
+    FnObj<MakeChatAtomsOptions['experimental_prepareRequestBody']>
+  >({ fn: opts.experimental_prepareRequestBody });
 
   const { messagesAtom } = opts;
   const dataAtom = atom<JSONValue[] | undefined>(undefined);
@@ -180,10 +186,18 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
   // const readySubmitAtom = atom(true)
   // const isPendingAtom = atom(false)
 
-  const onFinishAtom = atom<Handlers['onFinish']>(opts.onFinish);
-  const onResponseAtom = atom<Handlers['onResponse']>(opts.onResponse);
-  const onToolCallAtom = atom<Handlers['onToolCall']>(opts.onToolCall);
-  const onErrorAtom = atom<Handlers['onError']>(opts.onError);
+  const onFinishAtom = atom<FnObj<Handlers['onFinish']>>({
+    fn: opts.onFinish,
+  });
+  const onResponseAtom = atom<FnObj<Handlers['onResponse']>>({
+    fn: opts.onResponse,
+  });
+  const onToolCallAtom = atom<FnObj<Handlers['onToolCall']>>({
+    fn: opts.onToolCall,
+  });
+  const onErrorAtom = atom<FnObj<Handlers['onError']>>({
+    fn: opts.onError,
+  });
 
   // fetch: opts.fetch,
   // streamProtocol: opts.streamProtocol,
@@ -225,14 +239,16 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
         );
 
     const metadata = get(metadataAtom);
+    const streamProtocol = get(streamProtocolAtom);
+
     return await callChatApi({
       api,
       abortController: () => get(abortControllerAtom),
       generateId,
       streamProtocol,
       fetch: opts.fetch,
-      // req metadata
-      body: get(prepareRequestBodyAtom)?.({
+      // @ts-expect-error: signagure mismatch in upstream project (ai-sdk)
+      body: get(prepareRequestBodyAtom).fn?.({
         messages: chatRequest.messages,
         requestData: chatRequest.data,
         requestBody: chatRequest.body,
@@ -249,14 +265,14 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
       credentials: metadata.credentials,
       // handler
       restoreMessagesOnFailure: () => undefined,
-      onResponse: response => get(onResponseAtom)?.(response),
+      onResponse: response => get(onResponseAtom).fn?.(response),
       onFinish: (message, options) => {
-        const onFinish = get(onFinishAtom);
+        const onFinish = get(onFinishAtom).fn;
         if (onFinish) {
           onFinish(message, options);
         }
       },
-      onToolCall: ({ toolCall }) => get(onToolCallAtom)?.({ toolCall }),
+      onToolCall: ({ toolCall }) => get(onToolCallAtom).fn?.({ toolCall }),
       onUpdate: (newMessages: Message[], data: JSONValue[] | undefined) => {
         set(messagesAtom, [...chatRequest.messages, ...newMessages]);
         set(dataAtom, data);
@@ -287,7 +303,7 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
 
       if (error instanceof Error) {
         set(errorAtom, error);
-        get(onErrorAtom)?.(error);
+        get(onErrorAtom).fn?.(error);
       }
     } finally {
       set(isLoadingAtom, false);
@@ -297,6 +313,7 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
     const messages = get(messagesAtom);
     const lastMessage = messages[messages.length - 1];
     const messageCount = chatRequest.messages.length;
+    const maxSteps = get(maxStepsAtom);
     if (
       // ensure we actually have new messages (to prevent infinite loops in case of errors):
       messages.length > messageCount &&
@@ -381,7 +398,7 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
 
   const maybeThrowOnError = (get: Getter, set: Setter, error: Error) => {
     set(errorAtom, error);
-    const onError = get(onErrorAtom);
+    const onError = get(onErrorAtom).fn;
     if (onError) onError(error);
     else throw error;
   };
@@ -416,19 +433,73 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
     }
   });
 
-  return {
-    stopAtom,
-    appendAtom,
-    reloadAtom,
+  const addToolResultAtom = atom(
+    null,
+    (
+      get,
+      set,
+      {
+        toolCallId,
+        result,
+      }: {
+        toolCallId: string;
+        result: any;
+      },
+    ) => {
+      const messages = get(messagesAtom);
+      const updatedMessages = messages.map((message, index, arr) =>
+        // update the tool calls in the last assistant message:
+        index === arr.length - 1 &&
+        message.role === 'assistant' &&
+        message.toolInvocations
+          ? {
+              ...message,
+              toolInvocations: message.toolInvocations.map(toolInvocation =>
+                toolInvocation.toolCallId === toolCallId
+                  ? {
+                      ...toolInvocation,
+                      result,
+                      state: 'result' as const,
+                    }
+                  : toolInvocation,
+              ),
+            }
+          : message,
+      );
 
+      set(messagesAtom, updatedMessages);
+
+      if (updatedMessages.length === 0) return;
+      // auto-submit when all tool calls in the last assistant message have results:
+      const lastMessage = updatedMessages[updatedMessages.length - 1];
+      if (isAssistantMessageWithCompletedToolCalls(lastMessage!)) {
+        triggerRequest(get, set, { messages: updatedMessages });
+      }
+    },
+  );
+
+  return {
+    // data containers
     dataAtom,
     isLoadingAtom: atom(get => get(isLoadingAtom)),
     errorAtom: atom(get => get(errorAtom)),
 
-    // handlers
+    // actions
+    stopAtom,
+    appendAtom,
+    reloadAtom,
+    addToolResultAtom,
+
+    // configurable handlers
     onResponseAtom,
     onFinishAtom,
     onToolCallAtom,
     onErrorAtom,
+
+    prepareRequestBodyAtom,
+
+    // configurable options
+    maxStepsAtom,
+    streamProtocolAtom,
   };
 }

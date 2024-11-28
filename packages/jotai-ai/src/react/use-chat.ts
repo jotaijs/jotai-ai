@@ -39,6 +39,11 @@ export type UseChatOptions = {
   initialInput?: string;
 
   /**
+   * Streaming protocol that is used. Defaults to `data`.
+   */
+  streamProtocol?: 'data' | 'text';
+
+  /**
    * Keeps the last message when an error happens. This will be the default behavior
    * starting with the next major release.
    * The flag was introduced for backwards compatibility and currently defaults to `false`.
@@ -71,7 +76,7 @@ export type UseChatOptions = {
     messages: Message[];
     requestData?: JSONValue;
     requestBody?: object;
-  }) => JSONValue;
+  }) => Record<string, JSONValue>;
 } & Handlers;
 
 type UseChatActions = {
@@ -95,6 +100,19 @@ type UseChatActions = {
    * Abort the current request immediately, keep the generated tokens if any.
    */
   stop: () => void;
+
+  /**
+   * Function to add a tool result to the chat.
+   * This will update the chat messages with the tool result and call the API route
+   * if all tool results for the last message are available.
+   */
+  addToolResult: ({
+    toolCallId,
+    result,
+  }: {
+    toolCallId: string;
+    result: any;
+  }) => void;
 };
 
 export type UseChatReturn = {
@@ -113,11 +131,11 @@ export type UseChatReturn = {
   /** setState-powered method to update the input value */
   setInput: React.Dispatch<React.SetStateAction<string>>;
   /** An input/textarea-ready onChange handler to control the value of the input */
-  // handleInputChange: (
-  //   e:
-  //     | React.ChangeEvent<HTMLInputElement>
-  //     | React.ChangeEvent<HTMLTextAreaElement>,
-  // ) => void
+  handleInputChange: (
+    e:
+      | React.ChangeEvent<HTMLInputElement>
+      | React.ChangeEvent<HTMLTextAreaElement>,
+  ) => void;
   /** Form submission handler to automatically reset input and append a user message */
   handleSubmit: (
     event?: { preventDefault?: () => void },
@@ -178,18 +196,25 @@ export const ChatAtomsProvider = ({
   });
 };
 
-export const useChat = (opts: UseChatOptions): UseChatReturn => {
+export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
   const {
     appendAtom,
     dataAtom,
     errorAtom,
     isLoadingAtom,
+
+    reloadAtom,
+    stopAtom,
+    addToolResultAtom,
+
     onErrorAtom,
     onResponseAtom,
     onFinishAtom,
     onToolCallAtom,
-    reloadAtom,
-    stopAtom,
+    prepareRequestBodyAtom,
+
+    streamProtocolAtom,
+    maxStepsAtom,
   } = useChatAtoms();
   const inputObject = useAtom(inputAtom);
   const messagesObject = useAtom(messagesAtom);
@@ -201,16 +226,26 @@ export const useChat = (opts: UseChatOptions): UseChatReturn => {
   const append = useSetAtom(appendAtom);
   const reload = useSetAtom(reloadAtom);
   const stop = useSetAtom(stopAtom);
+  const addToolResult = useSetAtom(addToolResultAtom);
+
+  const setStreamProtocol = useSetAtom(streamProtocolAtom);
+  const setMaxSteps = useSetAtom(maxStepsAtom);
+
+  if (opts.streamProtocol) setStreamProtocol(opts.streamProtocol);
+  if (opts.maxSteps) setMaxSteps(opts.maxSteps);
 
   const setOnFinish = useSetAtom(onFinishAtom);
   const setOnReponse = useSetAtom(onResponseAtom);
   const setOnToolCall = useSetAtom(onToolCallAtom);
   const setOnError = useSetAtom(onErrorAtom);
+  if (opts.onFinish) setOnFinish({ fn: opts.onFinish });
+  if (opts.onResponse) setOnReponse({ fn: opts.onResponse });
+  if (opts.onToolCall) setOnToolCall({ fn: opts.onToolCall });
+  if (opts.onError) setOnError({ fn: opts.onError });
 
-  if (opts.onFinish) setOnFinish(opts.onFinish);
-  if (opts.onResponse) setOnReponse(opts.onResponse);
-  if (opts.onToolCall) setOnToolCall(opts.onToolCall);
-  if (opts.onError) setOnError(opts.onError);
+  const setOnPrepareRequestBody = useSetAtom(prepareRequestBodyAtom);
+  if (opts.experimental_prepareRequestBody)
+    setOnPrepareRequestBody({ fn: opts.experimental_prepareRequestBody });
 
   const handleSubmit = useCallback(
     (
@@ -234,6 +269,10 @@ export const useChat = (opts: UseChatOptions): UseChatReturn => {
     },
     [],
   );
+  const handleInputChange = (e: any) => {
+    const setInput = inputObject[1];
+    setInput(e.target.value);
+  };
 
   return {
     // state
@@ -259,8 +298,10 @@ export const useChat = (opts: UseChatOptions): UseChatReturn => {
       return inputObject[0];
     },
     setInput: inputObject[1],
+    handleInputChange,
     handleSubmit,
 
+    addToolResult,
     append,
     reload,
     stop,
