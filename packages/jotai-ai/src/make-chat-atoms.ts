@@ -198,13 +198,7 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
     get: Getter,
     set: Setter,
     chatRequest: ChatRequest,
-  ): Promise<
-    | Message
-    | {
-        messages: Message[];
-        data: JSONValue[];
-      }
-  > => {
+  ) => {
     // Do an optimistic update to the chat state to show the updated messages immediately:
     set(messagesAtom, chatRequest.messages);
 
@@ -265,10 +259,7 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
       onToolCall: ({ toolCall }) => get(onToolCallAtom)?.({ toolCall }),
       onUpdate: (newMessages: Message[], data: JSONValue[] | undefined) => {
         set(messagesAtom, [...chatRequest.messages, ...newMessages]);
-        set(dataAtom, existingData => [
-          ...(existingData ?? []),
-          ...(data ?? []),
-        ]);
+        set(dataAtom, data);
       },
     });
   };
@@ -364,8 +355,10 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
     // Remove the last assistant message and retry the last user message.
     const lastMessage = messages[messages.length - 1];
     if (lastMessage!.role === 'assistant') {
+      const lastRemovedMessages = messages.slice(0, -1);
+      set(messagesAtom, lastRemovedMessages);
       const chatRequest = {
-        messages: messages.slice(0, -1),
+        messages: lastRemovedMessages,
         headers,
         body,
         data,
