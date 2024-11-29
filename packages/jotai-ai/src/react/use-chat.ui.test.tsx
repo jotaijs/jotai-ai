@@ -1,7 +1,7 @@
 /* eslint-disable @eslint-react/dom/no-missing-button-type */
 import type { Message } from '@ai-sdk/ui-utils';
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import {
   formatDataStreamPart,
@@ -21,9 +21,20 @@ import {
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useChat } from './use-chat';
+import { useSetAtom } from 'jotai';
+import { messagesAtom, useChat } from './use-chat';
+
+const ResetMessagesComponent = () => {
+  // Reset messages on mount
+  const setMessages = useSetAtom(messagesAtom);
+  useEffect(() => {
+    setMessages([]);
+  }, []);
+  return <div></div>;
+};
 
 // adapt and modified from https://github.com/vercel/ai/blob/main/packages/react/src/use-chat.ui.test.tsx
+// current aligned commit: fc742123f7cd0c9e80955b525541daa4d1f496d7 (ai@4.0.7)
 describe('data protocol stream', () => {
   let onFinishCalls: Array<{
     message: Message;
@@ -87,6 +98,7 @@ describe('data protocol stream', () => {
 
   beforeEach(() => {
     // use a random id to avoid conflicts:
+    render(<ResetMessagesComponent />);
     render(<TestComponent id={`first-id-${generateId()}`} />);
     onFinishCalls = [];
   });
@@ -355,6 +367,7 @@ describe('text stream', () => {
   };
 
   beforeEach(() => {
+    render(<ResetMessagesComponent />);
     render(<TestComponent />);
     onFinishCalls = [];
   });
@@ -477,6 +490,7 @@ describe('form actions', () => {
   };
 
   beforeEach(() => {
+    render(<ResetMessagesComponent />);
     render(<TestComponent />);
   });
 
@@ -556,6 +570,7 @@ describe('form actions (with options)', () => {
   };
 
   beforeEach(() => {
+    render(<ResetMessagesComponent />);
     render(<TestComponent />);
   });
 
@@ -660,6 +675,7 @@ describe('prepareRequestBody', () => {
   };
 
   beforeEach(() => {
+    render(<ResetMessagesComponent />);
     render(<TestComponent />);
   });
 
@@ -743,6 +759,7 @@ describe('onToolCall', () => {
   };
 
   beforeEach(() => {
+    render(<ResetMessagesComponent />);
     render(<TestComponent />);
   });
 
@@ -819,6 +836,7 @@ describe('tool invocations', () => {
   };
 
   beforeEach(() => {
+    render(<ResetMessagesComponent />);
     render(<TestComponent />);
   });
 
@@ -1014,6 +1032,7 @@ describe('maxSteps', () => {
     };
 
     beforeEach(() => {
+      render(<ResetMessagesComponent />);
       render(<TestComponent />);
       onToolCallInvoked = false;
     });
@@ -1220,6 +1239,7 @@ describe('file attachments with data url', () => {
   };
 
   beforeEach(() => {
+    render(<ResetMessagesComponent />);
     render(<TestComponent />);
   });
 
@@ -1367,7 +1387,7 @@ describe('file attachments with url', () => {
                 return (
                   <div key={attachment.name} data-testid={`attachment-${idx}`}>
                     {Buffer.from(
-                      attachment.url.split(',')[1],
+                      attachment.url.split(',')[1] as string,
                       'base64',
                     ).toString('utf-8')}
                   </div>
@@ -1406,6 +1426,7 @@ describe('file attachments with url', () => {
   };
 
   beforeEach(() => {
+    render(<ResetMessagesComponent />);
     render(<TestComponent />);
   });
 
@@ -1510,6 +1531,7 @@ describe('attachments with empty submit', () => {
   };
 
   beforeEach(() => {
+    render(<ResetMessagesComponent />);
     render(<TestComponent />);
   });
 
@@ -1614,6 +1636,7 @@ describe('should append message with attachments', () => {
   };
 
   beforeEach(() => {
+    render(<ResetMessagesComponent />);
     render(<TestComponent />);
   });
 
@@ -1703,6 +1726,7 @@ describe('reload', () => {
   };
 
   beforeEach(() => {
+    render(<ResetMessagesComponent />);
     render(<TestComponent />);
   });
 
@@ -1785,6 +1809,7 @@ describe('test sending additional fields during message submission', () => {
   };
 
   beforeEach(() => {
+    render(<ResetMessagesComponent />);
     render(<TestComponent />);
   });
 

@@ -11,6 +11,7 @@ import type { LanguageModelUsage } from 'ai';
 
 import type { Getter, PrimitiveAtom, Setter } from 'jotai/vanilla';
 
+import { atomWithReset } from 'jotai/utils';
 import { atom } from 'jotai/vanilla';
 
 import { callChatApi } from '@ai-sdk/ui-utils';
@@ -19,6 +20,7 @@ import {
   countTrailingAssistantMessages,
   defaultGenerateId,
   isAssistantMessageWithCompletedToolCalls,
+  prepareAttachmentsForRequest,
 } from './utils';
 
 type Body = Record<string, JSONValue>;
@@ -166,41 +168,38 @@ export type MakeChatAtomsOptions = {
   Handlers;
 
 export function makeChatAtoms(opts: MakeChatAtomsOptions) {
+  const { messagesAtom } = opts;
+  const dataAtom = atomWithReset<JSONValue[] | undefined>(undefined);
+
+  // TODO: convert to atom to allow for configuration in `useChat`
   const api = opts.api ?? '/api/chat';
   const generateId = opts.generateId ?? defaultGenerateId;
 
-  const maxStepsAtom = atom(opts.maxSteps ?? 1);
-  const streamProtocolAtom = atom(opts.streamProtocol ?? 'data');
+  const maxStepsAtom = atomWithReset(opts.maxSteps ?? 1);
+  const streamProtocolAtom = atomWithReset(opts.streamProtocol ?? 'data');
 
-  const prepareRequestBodyAtom = atom<
+  const prepareRequestBodyAtom = atomWithReset<
     FnObj<MakeChatAtomsOptions['experimental_prepareRequestBody']>
   >({ fn: opts.experimental_prepareRequestBody });
 
-  const { messagesAtom } = opts;
-  const dataAtom = atom<JSONValue[] | undefined>(undefined);
-
-  const isLoadingAtom = atom(false);
-  const errorAtom = atom<Error | undefined>(undefined);
-  const abortControllerAtom = atom<AbortController | null>(null);
-
+  const isLoadingAtom = atomWithReset(false);
+  const errorAtom = atomWithReset<Error | undefined>(undefined);
+  const abortControllerAtom = atomWithReset<AbortController | null>(null);
   // const readySubmitAtom = atom(true)
   // const isPendingAtom = atom(false)
 
-  const onFinishAtom = atom<FnObj<Handlers['onFinish']>>({
+  const onFinishAtom = atomWithReset<FnObj<Handlers['onFinish']>>({
     fn: opts.onFinish,
   });
-  const onResponseAtom = atom<FnObj<Handlers['onResponse']>>({
+  const onResponseAtom = atomWithReset<FnObj<Handlers['onResponse']>>({
     fn: opts.onResponse,
   });
-  const onToolCallAtom = atom<FnObj<Handlers['onToolCall']>>({
+  const onToolCallAtom = atomWithReset<FnObj<Handlers['onToolCall']>>({
     fn: opts.onToolCall,
   });
-  const onErrorAtom = atom<FnObj<Handlers['onError']>>({
+  const onErrorAtom = atomWithReset<FnObj<Handlers['onError']>>({
     fn: opts.onError,
   });
-
-  // fetch: opts.fetch,
-  // streamProtocol: opts.streamProtocol,
 
   const metadataAtom = atom<ExtraMetadata>({
     credentials: opts.credentials,
@@ -247,7 +246,6 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
       generateId,
       streamProtocol,
       fetch: opts.fetch,
-      // @ts-expect-error: signagure mismatch in upstream project (ai-sdk)
       body: get(prepareRequestBodyAtom).fn?.({
         messages: chatRequest.messages,
         requestData: chatRequest.data,
@@ -334,24 +332,36 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
     get: Getter,
     set: Setter,
     message: Message | CreateMessage,
-    { headers, body, data, experimental_attachments }: ChatRequestOptions = {},
-  ) => {
-    if (!message.id) {
-      message.id = generateId();
-    }
-
-    // const attachmentsForRequest = await prepareAttachmentsForRequest(
-    //   experimental_attachments,
-    // )
-
-    const messages = get(messagesAtom);
-    const chatRequest = {
-      headers: headers,
-      body: body,
-      messages: [...messages, message as Message],
+    {
+      headers,
+      body,
       data,
-      // experimental_attachments:
-      //   attachmentsForRequest.length > 0 ? attachmentsForRequest : undefined,
+      experimental_attachments,
+      allowEmptySubmit,
+    }: ChatRequestOptions = {},
+  ) => {
+    const attachmentsForRequest = await prepareAttachmentsForRequest(
+      experimental_attachments,
+    );
+
+    const { id, createdAt, ...createMsg } = message;
+    const newMessage: Message = {
+      ...createMsg,
+      id: message.id ?? generateId(),
+      createdAt: message.createdAt ?? new Date(),
+      experimental_attachments:
+        attachmentsForRequest.length > 0 ? attachmentsForRequest : undefined,
+    };
+    const prevMessages = get(messagesAtom);
+
+    const chatRequest = {
+      messages:
+        !newMessage.content && !experimental_attachments && allowEmptySubmit
+          ? prevMessages
+          : [...prevMessages, newMessage],
+      headers,
+      body,
+      data,
     };
     return triggerRequest(get, set, chatRequest);
   };

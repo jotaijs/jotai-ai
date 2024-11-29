@@ -14,6 +14,7 @@ import { createContext, createElement, useCallback, useContext } from 'react';
 
 import { atom, useSetAtom } from 'jotai';
 import { useAtom } from 'jotai-lazy';
+import { RESET } from 'jotai/utils';
 
 import { makeChatAtoms } from '../make-chat-atoms';
 
@@ -230,22 +231,28 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
 
   const setStreamProtocol = useSetAtom(streamProtocolAtom);
   const setMaxSteps = useSetAtom(maxStepsAtom);
-
   if (opts.streamProtocol) setStreamProtocol(opts.streamProtocol);
+  else setStreamProtocol(RESET);
   if (opts.maxSteps) setMaxSteps(opts.maxSteps);
+  else setMaxSteps(RESET);
 
   const setOnFinish = useSetAtom(onFinishAtom);
   const setOnReponse = useSetAtom(onResponseAtom);
   const setOnToolCall = useSetAtom(onToolCallAtom);
   const setOnError = useSetAtom(onErrorAtom);
   if (opts.onFinish) setOnFinish({ fn: opts.onFinish });
+  else setOnFinish(RESET);
   if (opts.onResponse) setOnReponse({ fn: opts.onResponse });
+  else setOnReponse(RESET);
   if (opts.onToolCall) setOnToolCall({ fn: opts.onToolCall });
+  else setOnToolCall(RESET);
   if (opts.onError) setOnError({ fn: opts.onError });
+  else setOnError(RESET);
 
   const setOnPrepareRequestBody = useSetAtom(prepareRequestBodyAtom);
   if (opts.experimental_prepareRequestBody)
     setOnPrepareRequestBody({ fn: opts.experimental_prepareRequestBody });
+  else setOnPrepareRequestBody(RESET);
 
   const handleSubmit = useCallback(
     (
@@ -267,7 +274,7 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
       });
       setInput('');
     },
-    [],
+    [inputObject, append],
   );
   const handleInputChange = (e: any) => {
     const setInput = inputObject[1];
@@ -331,6 +338,7 @@ export {
   dataAtom,
   errorAtom,
   isLoadingAtom,
+  messagesAtom,
   onErrorAtom,
   onFinishAtom,
   onResponseAtom,
