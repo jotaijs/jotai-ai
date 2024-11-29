@@ -36,28 +36,28 @@
   "author": "himself65 <himself65@outlook.com>",
   "license": "MIT",
   "devDependencies": {
-    "@ai-sdk/provider": "^0.0.26",
+    "@ai-sdk/provider": "^1.0.1",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.0.1",
     "@testing-library/user-event": "^14.5.2",
     "@types/react": "18.3.12",
-    "@vitejs/plugin-react": "^4.3.3",
-    "ai": "^3.4.33",
-    "bunchee": "4.4.8",
-    "jotai": "2.10.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "ai": "^4.0.7",
+    "bunchee": "5.6.1",
+    "jotai": "2.10.3",
     "jsdom": "^25.0.1",
-    "prettier": "^3.3.3",
+    "prettier": "^3.4.1",
     "react": "18.3.1",
-    "typescript": "5.6.3",
-    "vitest": "^2.1.5"
+    "typescript": "5.7.2",
+    "vitest": "^2.1.6"
   },
   "peerDependencies": {
     "jotai": ">=2.5.1"
   },
   "dependencies": {
-    "@ai-sdk/provider-utils": "^1.0.22",
-    "@ai-sdk/ui-utils": "^0.0.50",
+    "@ai-sdk/provider-utils": "^2.0.2",
+    "@ai-sdk/ui-utils": "^1.0.2",
     "jotai-lazy": "^1.0.4"
   }
 }
