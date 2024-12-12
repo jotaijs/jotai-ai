@@ -177,7 +177,9 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
 
   const maxStepsAtom = atomWithReset(opts.maxSteps ?? 1);
   const streamProtocolAtom = atomWithReset(opts.streamProtocol ?? 'data');
-
+  const credentialsAtom = atomWithReset(opts.credentials);
+  const headersAtom = atomWithReset(opts.headers);
+  const bodyAtom = atomWithReset(opts.body);
   const prepareRequestBodyAtom = atomWithReset<
     FnObj<MakeChatAtomsOptions['experimental_prepareRequestBody']>
   >({ fn: opts.experimental_prepareRequestBody });
@@ -199,12 +201,6 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
   });
   const onErrorAtom = atomWithReset<FnObj<Handlers['onError']>>({
     fn: opts.onError,
-  });
-
-  const metadataAtom = atom<ExtraMetadata>({
-    credentials: opts.credentials,
-    headers: opts.headers,
-    body: opts.body,
   });
 
   const processResponseStream = async (
@@ -237,7 +233,9 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
           }),
         );
 
-    const metadata = get(metadataAtom);
+    const body = get(bodyAtom);
+    const credentials = get(credentialsAtom);
+    const headers = get(headersAtom);
     const streamProtocol = get(streamProtocolAtom);
 
     return await callChatApi({
@@ -253,14 +251,14 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
       }) ?? {
         messages: constructedMessagesPayload,
         data: chatRequest.data,
-        ...metadata.body,
+        ...body,
         ...chatRequest.body,
       },
       headers: {
-        ...metadata.headers,
+        ...headers,
         ...chatRequest.headers,
       },
-      credentials: metadata.credentials,
+      credentials: credentials,
       // handler
       restoreMessagesOnFailure: () => undefined,
       onResponse: response => get(onResponseAtom).fn?.(response),
@@ -506,10 +504,12 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
     onToolCallAtom,
     onErrorAtom,
 
-    prepareRequestBodyAtom,
-
     // configurable options
-    maxStepsAtom,
     streamProtocolAtom,
+    bodyAtom,
+    headersAtom,
+    credentialsAtom,
+    maxStepsAtom,
+    prepareRequestBodyAtom,
   };
 }
