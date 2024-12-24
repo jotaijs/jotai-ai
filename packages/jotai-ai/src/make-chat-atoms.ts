@@ -281,6 +281,8 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
     set: Setter,
     chatRequest: ChatRequest,
   ) => {
+    const messageCount = get(messagesAtom).length;
+
     try {
       set(isLoadingAtom, true);
       set(errorAtom, undefined);
@@ -308,7 +310,6 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
     // auto-submit when all tool calls in the last assistant message have results:
     const messages = get(messagesAtom);
     const lastMessage = messages[messages.length - 1];
-    const messageCount = chatRequest.messages.length;
     const maxSteps = get(maxStepsAtom);
     if (
       // ensure we actually have new messages (to prevent infinite loops in case of errors):
