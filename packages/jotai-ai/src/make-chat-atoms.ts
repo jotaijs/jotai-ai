@@ -262,12 +262,7 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
       // handler
       restoreMessagesOnFailure: () => undefined,
       onResponse: response => get(onResponseAtom).fn?.(response),
-      onFinish: (message, options) => {
-        const onFinish = get(onFinishAtom).fn;
-        if (onFinish) {
-          onFinish(message, options);
-        }
-      },
+      onFinish: (message, options) => get(onFinishAtom).fn?.(message, options),
       onToolCall: ({ toolCall }) => get(onToolCallAtom).fn?.({ toolCall }),
       onUpdate: (newMessages: Message[], data: JSONValue[] | undefined) => {
         set(messagesAtom, [...chatRequest.messages, ...newMessages]);
