@@ -1,7 +1,10 @@
 import type { Attachment, Message } from '@ai-sdk/ui-utils';
-import type { CoreMessage, CoreToolMessage, ToolInvocation } from 'ai';
-
 import { generateId as defaultGenerateId } from '@ai-sdk/ui-utils';
+import {
+  type CoreMessage,
+  type CoreToolMessage,
+  type ToolInvocation,
+} from 'ai';
 
 export { defaultGenerateId };
 
@@ -12,7 +15,7 @@ export const isPromiseLike = (
     typeof value === 'object' &&
     value !== null &&
     'then' in value &&
-    typeof (value as any).then === 'function'
+    typeof value.then === 'function'
   );
 };
 
@@ -88,8 +91,9 @@ export function convertToUIMessages(
     }
 
     chatMessages.push({
+      ...message,
       id: message.id ?? generateId(),
-      role: message.role as Message['role'],
+      role: message.role,
       content: textContent,
       toolInvocations,
     });

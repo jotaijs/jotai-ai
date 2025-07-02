@@ -22,9 +22,6 @@
       "path": "./examples/llamaindex-straming"
     },
     {
-      "path": "./examples/waku-chat"
-    },
-    {
       "path": "./packages/jotai-ai"
     }
   ],

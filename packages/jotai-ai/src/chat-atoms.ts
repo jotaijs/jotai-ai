@@ -1,22 +1,21 @@
-import { atom, type Getter, type Setter } from 'jotai/vanilla';
+import type { FetchFunction } from '@ai-sdk/provider-utils';
+import { generateId as generateIdImpl } from '@ai-sdk/provider-utils';
 import {
+  callChatApi,
   type ChatRequest,
   type ChatRequestOptions,
   type CreateMessage,
-  callChatApi,
-  processChatStream,
   type JSONValue,
   type Message,
   type UseChatOptions,
 } from '@ai-sdk/ui-utils';
+import { atom, type Getter, type Setter } from 'jotai/vanilla';
+import type { FormEvent } from 'react';
 import {
   countTrailingAssistantMessages,
   isAssistantMessageWithCompletedToolCalls,
   isPromiseLike,
 } from './utils';
-import type { FormEvent } from 'react';
-import type { FetchFunction } from '@ai-sdk/provider-utils';
-import { generateId as generateIdImpl } from '@ai-sdk/provider-utils';
 
 export function chatAtoms(
   chatOptions: Omit<
@@ -58,10 +57,8 @@ export function chatAtoms(
     experimental_onFunctionCall?: (
       get: Getter,
       set: Setter,
-      ...args: Parameters<
-        Required<UseChatOptions>['experimental_onFunctionCall']
-      >
-    ) => ReturnType<Required<UseChatOptions>['experimental_onFunctionCall']>;
+      ...args: Parameters<Required<UseChatOptions>['onToolCall']>
+    ) => ReturnType<Required<UseChatOptions>['onToolCall']>;
     // if you pass async function or promise, you will need a suspense boundary
     initialMessages?:
       | Message[]
@@ -125,6 +122,14 @@ export function chatAtoms(
     // Do an optimistic update to the chat state to show the updated messages immediately:
     set(messagesAtom, chatRequest.messages);
 
+    // Reset data atom for this new request
+    set(dataAtom, []);
+
+    const lastMessage = chatRequest.messages[chatRequest.messages.length - 1];
+    if (!lastMessage) {
+      throw new Error('No last message found');
+    }
+
     const constructedMessagesPayload = sendExtraMessageFields
       ? chatRequest.messages
       : chatRequest.messages.map(
@@ -132,27 +137,27 @@ export function chatAtoms(
             role,
             content,
             experimental_attachments,
-            name,
             data,
             annotations,
             toolInvocations,
-            function_call,
-            tool_calls,
-            tool_call_id,
+            id,
+            createdAt,
+            parts,
           }) => ({
+            id,
+            createdAt,
+            parts,
+            annotations,
+            data,
+            experimental_attachments,
             role,
             content,
             ...(experimental_attachments !== undefined && {
               experimental_attachments,
             }),
-            ...(name !== undefined && { name }),
             ...(data !== undefined && { data }),
             ...(annotations !== undefined && { annotations }),
             ...(toolInvocations !== undefined && { toolInvocations }),
-            // outdated function/tool call handling (TODO deprecate):
-            tool_call_id,
-            ...(function_call !== undefined && { function_call }),
-            ...(tool_calls !== undefined && { tool_calls }),
           }),
         );
     const metadata = get(metadataAtom);
@@ -168,23 +173,11 @@ export function chatAtoms(
         data: chatRequest.data,
         ...metadata.body,
         ...chatRequest.body,
-        ...(chatRequest.functions !== undefined && {
-          functions: chatRequest.functions,
-        }),
-        ...(chatRequest.function_call !== undefined && {
-          function_call: chatRequest.function_call,
-        }),
-        ...(chatRequest.tools !== undefined && {
-          tools: chatRequest.tools,
-        }),
-        ...(chatRequest.tool_choice !== undefined && {
-          tool_choice: chatRequest.tool_choice,
-        }),
       },
       streamProtocol: metadata.streamProtocol,
       headers: {
         ...metadata.headers,
-        ...chatRequest.options?.headers,
+        ...chatRequest.headers,
       },
       credentials: metadata.credentials,
       onResponse: response => chatOptions.onResponse?.(get, set, response),
@@ -192,14 +185,25 @@ export function chatAtoms(
       onFinish: message => chatOptions.onFinish?.(get, set, message),
       fetch: metadata.fetch,
       onToolCall: chatOptions.onToolCall,
-      onUpdate: (merged: Message[], data: JSONValue[] | undefined): void => {
-        set(messagesAtom, [...chatRequest.messages, ...merged]);
-        set(dataAtom, existingData => [
-          ...(existingData ?? []),
-          ...(data ?? []),
-        ]);
+      onUpdate: (options: {
+        message: Message;
+        data: JSONValue[] | undefined;
+        replaceLastMessage: boolean;
+      }): void => {
+        const { message, data, replaceLastMessage } = options;
+        if (replaceLastMessage) {
+          // Replace the last message
+          set(messagesAtom, [...chatRequest.messages.slice(0, -1), message]);
+        } else {
+          // Append the new message
+          set(messagesAtom, [...chatRequest.messages, message]);
+        }
+        if (data !== undefined) {
+          set(dataAtom, data);
+        }
       },
       generateId,
+      lastMessage: { ...lastMessage, parts: lastMessage?.parts || [] },
     });
   }
 
@@ -217,33 +221,8 @@ export function chatAtoms(
       const abortController = new AbortController();
       set(abortControllerAtom, abortController);
 
-      const experimental_onFunctionCall =
-        chatOptions.experimental_onFunctionCall;
-      await processChatStream({
-        getStreamedResponse: () => getStreamedResponse(get, set, chatRequest),
-        getCurrentMessages(): Message[] {
-          const messages = get(messagesAtom);
-          if (messages instanceof Promise) {
-            throw new Error(
-              'Cannot get current messages while messages are still loading',
-            );
-          }
-          return messages;
-        },
-        experimental_onFunctionCall: experimental_onFunctionCall
-          ? (chatMessages, functionCall) => {
-              return experimental_onFunctionCall(
-                get,
-                set,
-                chatMessages,
-                functionCall,
-              );
-            }
-          : undefined,
-        updateChatRequest(chatRequestParam: ChatRequest): void {
-          chatRequest = chatRequestParam;
-        },
-      });
+      // Just call getStreamedResponse directly instead of processChatStream
+      await getStreamedResponse(get, set, chatRequest);
     } catch (err) {
       // Ignore abort errors as they are expected.
       if ((err as any).name === 'AbortError') {
@@ -251,8 +230,8 @@ export function chatAtoms(
         return null;
       }
 
-      if (onError && err instanceof Error) {
-        onError(get, set, err);
+      if (chatOptions.onError && err instanceof Error) {
+        chatOptions.onError(get, set, err);
       }
     } finally {
       set(isLoadingAtom, false);
@@ -283,38 +262,24 @@ export function chatAtoms(
     get: Getter,
     set: Setter,
     message: Message | CreateMessage,
-    {
-      options,
-      functions,
-      function_call,
-      tools,
-      tool_choice,
-      data,
-      headers,
-      body,
-    }: ChatRequestOptions = {},
+    { data, headers, body }: ChatRequestOptions = {},
   ) {
     if (!message.id) {
       message.id = generateId();
     }
 
     const requestOptions = {
-      headers: headers ?? options?.headers,
-      body: body ?? options?.body,
+      headers: headers,
+      body: body,
     };
 
     const messages = await get(messagesAtom);
 
     const chatRequest: ChatRequest = {
       messages: messages.concat(message as Message),
-      options: requestOptions,
       headers: requestOptions.headers,
       body: requestOptions.body,
       data,
-      ...(functions !== undefined && { functions }),
-      ...(function_call !== undefined && { function_call }),
-      ...(tools !== undefined && { tools }),
-      ...(tool_choice !== undefined && { tool_choice }),
     };
 
     return triggerRequest(get, set, chatRequest);
@@ -422,26 +387,13 @@ export function chatAtoms(
     ),
     reloadAtom: atom(
       null,
-      async (
-        get,
-        set,
-        {
-          options,
-          functions,
-          function_call,
-          tools,
-          tool_choice,
-          data,
-          headers,
-          body,
-        }: ChatRequestOptions = {},
-      ) => {
+      async (get, set, { data, headers, body }: ChatRequestOptions = {}) => {
         const messages = await get(messagesAtom);
         if (messages.length === 0) return null;
 
         const requestOptions = {
-          headers: headers ?? options?.headers,
-          body: body ?? options?.body,
+          headers: headers,
+          body: body,
         };
 
         // Remove the last assistant message and retry the last user message.
@@ -449,14 +401,9 @@ export function chatAtoms(
         if (lastMessage!.role === 'assistant') {
           const chatRequest: ChatRequest = {
             messages: messages.slice(0, -1),
-            options: requestOptions,
             headers: requestOptions.headers,
             body: requestOptions.body,
             data,
-            ...(functions !== undefined && { functions }),
-            ...(function_call !== undefined && { function_call }),
-            ...(tools !== undefined && { tools }),
-            ...(tool_choice !== undefined && { tool_choice }),
           };
 
           return triggerRequest(get, set, chatRequest);
@@ -464,14 +411,9 @@ export function chatAtoms(
 
         const chatRequest: ChatRequest = {
           messages,
-          options: requestOptions,
           headers: requestOptions.headers,
           body: requestOptions.body,
           data,
-          ...(functions !== undefined && { functions }),
-          ...(function_call !== undefined && { function_call }),
-          ...(tools !== undefined && { tools }),
-          ...(tool_choice !== undefined && { tool_choice }),
         };
 
         return triggerRequest(get, set, chatRequest);

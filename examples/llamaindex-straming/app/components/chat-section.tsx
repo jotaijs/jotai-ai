@@ -7,7 +7,6 @@ import { ChatInput, ChatMessages } from "./ui/chat";
 import { useAtom, useAtomValue, useSetAtom } from "jotai/react";
 import { Suspense } from "react";
 import { atom } from "jotai/vanilla";
-import type { Message } from "ai";
 
 const {
   messagesAtom,
@@ -25,7 +24,7 @@ const {
 });
 
 const clearMessagesAtom = atom(null, async (_get, set) =>
-  set(messagesAtom, [] as Message[]),
+  set(messagesAtom, []),
 );
 
 const saveMessagesEffectAtom = atomEffect((get, _set) => {
