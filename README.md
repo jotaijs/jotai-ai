@@ -246,7 +246,7 @@ export const App = () => {
   return (
     <div>
       {isPending && <p>Loading...</p>}
-      {messages.map((message) => (
+      {messages.map(message => (
         <p key={message.id}>{message.text}</p>
       ))}
     </div>

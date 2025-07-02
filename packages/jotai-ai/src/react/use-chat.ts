@@ -1,11 +1,5 @@
 'use client';
-import type {
-  ChatRequestOptions,
-  CreateMessage,
-  IdGenerator,
-  JSONValue,
-  Message,
-} from 'ai';
+import type { ChatRequestOptions, IdGenerator, JSONValue } from 'ai';
 import type { Handlers } from '../make-chat-atoms';
 
 import {
@@ -14,12 +8,14 @@ import {
   useContext,
   createElement,
   type ReactNode,
+  useEffect,
 } from 'react';
 
 import { atom, useSetAtom } from 'jotai';
 import { useAtom } from 'jotai-lazy';
 
 import { makeChatAtoms } from '../make-chat-atoms';
+import type { Message, CreateMessage } from '@ai-sdk/react';
 
 export type UseChatOptions = {
   /**
@@ -211,10 +207,29 @@ export const useChat = (opts: UseChatOptions): UseChatReturn => {
   const setOnToolCall = useSetAtom(onToolCallAtom);
   const setOnError = useSetAtom(onErrorAtom);
 
-  if (opts.onFinish) setOnFinish(opts.onFinish);
-  if (opts.onResponse) setOnReponse(opts.onResponse);
-  if (opts.onToolCall) setOnToolCall(opts.onToolCall);
-  if (opts.onError) setOnError(opts.onError);
+  useEffect(() => {
+    if (opts.onFinish) setOnFinish(opts.onFinish);
+  }, [opts.onFinish, setOnFinish]);
+
+  useEffect(() => {
+    if (opts.onResponse) setOnReponse(opts.onResponse);
+  }, [opts.onResponse, setOnReponse]);
+
+  useEffect(() => {
+    if (opts.onToolCall) setOnToolCall(opts.onToolCall);
+  }, [opts.onToolCall, setOnToolCall]);
+
+  useEffect(() => {
+    if (opts.onError) setOnError(opts.onError);
+  }, [opts.onError, setOnError]);
+
+  // Handle id changes - clear messages when id changes
+  useEffect(() => {
+    if (opts.id) {
+      messagesObject[1]([]);
+      dataObject[1]([]);
+    }
+  }, [opts.id, messagesObject, dataObject]);
 
   const handleSubmit = useCallback(
     (
