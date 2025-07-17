@@ -3,21 +3,11 @@ import type { Message } from '@ai-sdk/ui-utils';
 
 import React, { useEffect, useRef, useState } from 'react';
 
-import {
-  formatDataStreamPart,
-  generateId,
-  getTextFromDataUrl,
-} from '@ai-sdk/ui-utils';
+import { formatDataStreamPart, generateId } from 'ai';
 
 import { withTestServer } from '@ai-sdk/provider-utils/test';
 import '@testing-library/jest-dom/vitest';
-import {
-  cleanup,
-  findByText,
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react';
+import { cleanup, findByText, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -69,24 +59,28 @@ describe('data protocol stream', () => {
           </div>
         ))}
         <button
+          type="button"
           data-testid="do-append"
           onClick={() => {
             append({ role: 'user', content: 'hi' });
           }}
         />
         <button
+          type="button"
           data-testid="do-change-id"
           onClick={() => {
             setId('second-id');
           }}
         />
         <button
+          type="button"
           data-testid="do-set-data"
           onClick={() => {
             setData([{ t1: 'set' }]);
           }}
         />
         <button
+          type="button"
           data-testid="do-clear-data"
           onClick={() => {
             setData(undefined);
@@ -258,10 +252,10 @@ describe('data protocol stream', () => {
         url: '/api/chat',
         type: 'stream-values',
         content: [
-          formatDataStreamPart('text', 'Hello'),
-          formatDataStreamPart('text', ','),
-          formatDataStreamPart('text', ' world'),
-          formatDataStreamPart('text', '.'),
+          formatDataStreamPart('data', [{ t1: 'Hello' }]),
+          formatDataStreamPart('data', [{ t1: ',' }]),
+          formatDataStreamPart('data', [{ t1: ' world' }]),
+          formatDataStreamPart('data', [{ t1: '.' }]),
           formatDataStreamPart('finish_message', {
             finishReason: 'stop',
             usage: { completionTokens: 1, promptTokens: 3 },

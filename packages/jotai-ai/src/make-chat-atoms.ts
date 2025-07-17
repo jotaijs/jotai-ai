@@ -1,20 +1,19 @@
 import type { LanguageModelV1FinishReason } from '@ai-sdk/provider';
 import type { FetchFunction, ToolCall } from '@ai-sdk/provider-utils';
-import type {
-  ChatRequest,
-  ChatRequestOptions,
-  CreateMessage,
-  JSONValue,
-  Message,
+import {
+  callChatApi,
+  type ChatRequest,
+  type ChatRequestOptions,
+  type CreateMessage,
+  type JSONValue,
+  type Message,
 } from '@ai-sdk/ui-utils';
-import type { LanguageModelUsage } from 'ai';
+import type { LanguageModelUsage, UIMessage } from 'ai';
 
 import type { Getter, PrimitiveAtom, Setter } from 'jotai/vanilla';
 
 import { atomWithReset } from 'jotai/utils';
 import { atom } from 'jotai/vanilla';
-
-import { callChatApi } from '@ai-sdk/ui-utils';
 
 import {
   countTrailingAssistantMessages,
@@ -215,30 +214,27 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
       ? chatRequest.messages
       : chatRequest.messages.map(
           ({
+            id,
             role,
             content,
-            experimental_attachments,
-            data,
+            createdAt,
+            parts,
             annotations,
-            toolInvocations,
+            experimental_attachments,
           }) => ({
+            id,
             role,
             content,
-            ...(experimental_attachments !== undefined && {
-              experimental_attachments,
-            }),
-            ...(data !== undefined && { data }),
-            ...(annotations !== undefined && { annotations }),
-            ...(toolInvocations !== undefined && { toolInvocations }),
+            createdAt,
+            parts,
+            annotations,
+            experimental_attachments,
           }),
         );
 
-    const body = get(bodyAtom);
-    const credentials = get(credentialsAtom);
-    const headers = get(headersAtom);
-    const streamProtocol = get(streamProtocolAtom);
-
-    return await callChatApi({
+    const metadata = get(metadataAtom);
+    const lastMessage = chatRequest.messages[chatRequest.messages.length - 1];
+    await callChatApi({
       api,
       abortController: () => get(abortControllerAtom),
       generateId,
@@ -261,14 +257,35 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
       credentials: credentials,
       // handler
       restoreMessagesOnFailure: () => undefined,
-      onResponse: response => get(onResponseAtom).fn?.(response),
-      onFinish: (message, options) => get(onFinishAtom).fn?.(message, options),
-      onToolCall: ({ toolCall }) => get(onToolCallAtom).fn?.({ toolCall }),
-      onUpdate: (newMessages: Message[], data: JSONValue[] | undefined) => {
-        set(messagesAtom, [...chatRequest.messages, ...newMessages]);
-        set(dataAtom, data);
+      onResponse: response => get(onResponseAtom)?.(response),
+      onFinish: (message, options) => {
+        const onFinish = get(onFinishAtom);
+        if (onFinish) {
+          onFinish(message, options);
+        }
+      },
+      onToolCall: ({ toolCall }) => get(onToolCallAtom)?.({ toolCall }),
+      onUpdate: (options: {
+        message: UIMessage;
+        data: JSONValue[] | undefined;
+      }) => {
+        set(messagesAtom, [...chatRequest.messages, options.message]);
+        set(dataAtom, existingData => [
+          ...(existingData ?? []),
+          ...(options.data ?? []),
+        ]);
+      },
+      requestType: 'generate',
+      lastMessage: lastMessage && {
+        ...lastMessage,
+        parts: lastMessage.parts || [],
       },
     });
+
+    return {
+      messages: chatRequest.messages,
+      data: get(dataAtom) ?? [],
+    };
   };
 
   const triggerRequest = async (
