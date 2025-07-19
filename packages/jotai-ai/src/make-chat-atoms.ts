@@ -156,7 +156,7 @@ export type MakeChatAtomsOptions = {
     messages: Message[];
     requestData?: JSONValue;
     requestBody?: object;
-  }) => Record<string, JSONValue>;
+  }) => unknown;
 
   // /**
   //  * Custom throttle wait in ms for the chat messages and data updates.
@@ -574,6 +574,7 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
     streamDataAtom,
     isLoadingAtom: atom(get => get(isLoadingAtom)),
     errorAtom: atom(get => get(errorAtom)),
+    statusAtom: atom(get => get(statusAtom)),
 
     // actions
     stopAtom,

@@ -1,3 +1,5 @@
+// adapt and modified from https://github.com/vercel/ai/blob/v4/packages/react/src/use-chat.ts
+// aligned commit: 6c59ae7d7162140fcf37fc6afbec4486e82c50bc (codebase, not for single file)
 'use client';
 
 import type { ReactNode } from 'react';
@@ -100,7 +102,7 @@ export type UseChatReturn = {
    * manually to regenerate the AI response.
    */
   setMessages: (
-    messages: UIMessage[] | ((UIMessages: UIMessage[]) => UIMessage[]),
+    messages: UIMessage[] | ((messages: UIMessage[]) => UIMessage[]),
   ) => void;
 
   /** The current value of the input */
@@ -119,6 +121,7 @@ export type UseChatReturn = {
     chatRequestOptions?: ChatRequestOptions,
   ) => void;
   metadata?: object;
+
   /** Additional data added on the server via StreamData. */
   data?: JSONValue[];
   /**
@@ -128,23 +131,30 @@ export type UseChatReturn = {
    */
   setData: (data?: JSONValue[]) => void;
 
-  /** Whether the API request is in progress */
+  /**
+   * Whether the API request is in progress
+   *
+   * @deprecated use `status` instead
+   */
   isLoading: boolean;
+  /**
+   * Hook status:
+   *
+   * - `submitted`: The message has been sent to the API and we're awaiting the start of the response stream.
+   * - `streaming`: The response is actively streaming in from the API, receiving chunks of data.
+   * - `ready`: The full response has been received and processed; a new user message can be submitted.
+   * - `error`: An error occurred during the API request, preventing successful completion.
+   */
+  status: 'submitted' | 'streaming' | 'ready' | 'error';
+
   /** The error object of the API request */
   error?: Error;
-  /**
-   * Append a user message to the chat list. This triggers the API call to fetch
-   * the assistant's response.
-   * @param message The message to append
-   * @param options Additional options to pass to the API call
-   */
 } & UseChatActions;
 
 const messagesAtom = atom<UIMessage[]>([]);
 const inputAtom = atom<string>('');
 
 const defaultChatAtoms = makeChatAtoms({ messagesAtom });
-
 const ChatAtomsContext = createContext<ReturnType<typeof makeChatAtoms> | null>(
   null,
 );
@@ -181,6 +191,7 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
     streamDataAtom,
     errorAtom,
     isLoadingAtom,
+    statusAtom,
 
     reloadAtom,
     stopAtom,
@@ -207,6 +218,7 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
   const dataObject = useAtom(streamDataAtom);
   const isLoadingObject = useAtom(isLoadingAtom);
   const errorObject = useAtom(errorAtom);
+  const statusObject = useAtom(statusAtom);
 
   const append = useSetAtom(appendAtom);
   const reload = useSetAtom(reloadAtom);
@@ -215,9 +227,20 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
   const resume = useSetAtom(resumeAtom);
 
   const setOnFinish = useSetAtom(onFinishAtom);
+  if (opts.onFinish) setOnFinish({ fn: opts.onFinish });
+  else setOnFinish(RESET);
+
   const setOnReponse = useSetAtom(onResponseAtom);
+  if (opts.onResponse) setOnReponse({ fn: opts.onResponse });
+  else setOnReponse(RESET);
+
   const setOnToolCall = useSetAtom(onToolCallAtom);
+  if (opts.onToolCall) setOnToolCall({ fn: opts.onToolCall });
+  else setOnToolCall(RESET);
+
   const setOnError = useSetAtom(onErrorAtom);
+  if (opts.onError) setOnError({ fn: opts.onError });
+  else setOnError(RESET);
 
   const setStreamProtocol = useSetAtom(streamProtocolAtom);
   if (opts.streamProtocol) setStreamProtocol(opts.streamProtocol);
@@ -242,26 +265,35 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
     setPrepareRequestBody({ fn: opts.experimental_prepareRequestBody });
   else setPrepareRequestBody(RESET);
 
-  useEffect(() => {
-    if (opts.onFinish) setOnFinish({ fn: opts.onFinish });
-  }, [opts.onFinish, setOnFinish]);
+  // useEffect(() => {
+  //   if (opts.onFinish) setOnFinish({ fn: opts.onFinish });
+  // }, [opts.onFinish, setOnFinish]);
 
-  useEffect(() => {
-    if (opts.onResponse) setOnReponse({ fn: opts.onResponse });
-  }, [opts.onResponse, setOnReponse]);
+  // useEffect(() => {
+  //   if (opts.onResponse) setOnReponse({ fn: opts.onResponse });
+  // }, [opts.onResponse, setOnReponse]);
 
-  useEffect(() => {
-    if (opts.onToolCall) setOnToolCall({ fn: opts.onToolCall });
-  }, [opts.onToolCall, setOnToolCall]);
+  // useEffect(() => {
+  //   if (opts.onToolCall) setOnToolCall({ fn: opts.onToolCall });
+  // }, [opts.onToolCall, setOnToolCall]);
 
-  useEffect(() => {
-    if (opts.onError) setOnError({ fn: opts.onError });
-  }, [opts.onError, setOnError]);
+  // useEffect(() => {
+  //   if (opts.onError) setOnError({ fn: opts.onError });
+  // }, [opts.onError, setOnError]);
 
-  // Handle id changes
-  useEffect(() => {
-    if (opts.id) setChatId(opts.id);
-  }, [opts.id, chatId, setChatId]);
+  // // // Handle id changes and reset messages
+  // // useEffect(() => {
+  // //   if (opts.id) {
+  // //     setChatId(opts.id);
+  // //   }
+  // // }, [opts.id, chatId, setChatId]);
+
+  // // // Handle initialMessages changes
+  // // useEffect(() => {
+  // //   if (opts.initialMessages) {
+  // //     messagesObject[1](opts.initialMessages);
+  // //   }
+  // // }, [opts.initialMessages, messagesObject]);
 
   const handleSubmit = useCallback(
     (
@@ -300,6 +332,9 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
     // firstTokenReceived,
     get error() {
       return errorObject[0];
+    },
+    get status() {
+      return statusObject[0];
     },
 
     // user interface
