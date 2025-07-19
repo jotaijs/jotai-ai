@@ -1,13 +1,21 @@
 'use client';
-import type { ChatRequestOptions, IdGenerator, JSONValue } from 'ai';
-import type { Handlers } from '../make-chat-atoms';
+
+import type { ReactNode } from 'react';
+import {
+  type ChatRequestOptions,
+  type IdGenerator,
+  type JSONValue,
+  type Message,
+  type UIMessage,
+  type CreateMessage,
+} from 'ai';
+import type { MakeChatAtomsOptions, Handlers } from '../make-chat-atoms';
 
 import {
   useCallback,
   createContext,
   useContext,
   createElement,
-  type ReactNode,
   useEffect,
 } from 'react';
 
@@ -16,68 +24,25 @@ import { useAtom } from 'jotai-lazy';
 import { RESET } from 'jotai/utils';
 
 import { makeChatAtoms } from '../make-chat-atoms';
-import type { Message, CreateMessage } from '@ai-sdk/react';
 
-export type UseChatOptions = {
-  /**
-   * The API endpoint that accepts a `{ messages: Message[] }` object and returns
-   * a stream of tokens of the AI chat response. Defaults to `/api/chat`.
-   */
-  api?: string;
-  /**
-   * A unique identifier for the chat. If not provided, a random one will be
-   * generated. When provided, the `useChat` hook with the same `id` will
-   * have shared states across components.
-   */
-  id?: string;
+export type UseChatOptions = Pick<
+  MakeChatAtomsOptions,
+  | 'api'
+  | 'id'
+  | 'streamProtocol'
+  | 'keepLastMessageOnError'
+  | 'maxSteps'
+  | 'sendExtraMessageFields'
+  | 'experimental_prepareRequestBody'
+> & {
   /**
    * Initial messages of the chat. Useful to load an existing chat history.
    */
-  initialMessages?: Message[];
+  initialMessages?: UIMessage[];
   /**
    * Initial input of the chat.
    */
   initialInput?: string;
-
-  /**
-   * Streaming protocol that is used. Defaults to `data`.
-   */
-  streamProtocol?: 'data' | 'text';
-
-  /**
-   * Keeps the last message when an error happens. This will be the default behavior
-   * starting with the next major release.
-   * The flag was introduced for backwards compatibility and currently defaults to `false`.
-   * Please enable it and update your error handling/resubmit behavior.
-   */
-  keepLastMessageOnError?: boolean;
-  /**
-   * Maximum number of sequential LLM calls (steps), e.g. when you use tool calls. Must be at least 1.
-   *
-   * A maximum number is required to prevent infinite loops in the case of misconfigured tools.
-   *
-   * By default, it's set to 1, which means that only a single LLM call is made.
-   */
-  maxSteps?: number;
-  /**
-   * A way to provide a function that is going to be used for ids for messages.
-   * If not provided the default AI SDK `generateId` is used.
-   */
-  generateId?: IdGenerator;
-  /**
-   * Experimental (React only). When a function is provided, it will be used
-   * to prepare the request body for the chat API. This can be useful for
-   * customizing the request body based on the messages and data in the chat.
-   *
-   * @param messages The current messages in the chat.
-   * @param requestData The data object passed in the chat request.
-   * @param requestBody The request body object passed in the chat request.
-   */
-  experimental_prepareRequestBody?: (options: {
-    messages: Message[];
-    requestData?: JSONValue;
-    requestBody?: object;
-  }) => Record<string, JSONValue>;
 } & Handlers;
 
 type UseChatActions = {
@@ -103,6 +68,11 @@ type UseChatActions = {
   stop: () => void;
 
   /**
+   * Resume an ongoing chat generation stream. This does not resume an aborted generation.
+   */
+  experimental_resume: () => void;
+
+  /**
    * Function to add a tool result to the chat.
    * This will update the chat messages with the tool result and call the API route
    * if all tool results for the last message are available.
@@ -117,16 +87,22 @@ type UseChatActions = {
 };
 
 export type UseChatReturn = {
+  /**
+   * The id of the chat.
+   */
+  id: string;
+
   /** Current messages in the chat */
-  messages: Message[];
+  messages: UIMessage[];
   /**
    * Update the `messages` state locally. This is useful when you want to
    * edit the messages on the client, and then trigger the `reload` method
    * manually to regenerate the AI response.
    */
   setMessages: (
-    messages: Message[] | ((messages: Message[]) => Message[]),
+    messages: UIMessage[] | ((UIMessages: UIMessage[]) => UIMessage[]),
   ) => void;
+
   /** The current value of the input */
   input: string;
   /** setState-powered method to update the input value */
@@ -164,7 +140,7 @@ export type UseChatReturn = {
    */
 } & UseChatActions;
 
-const messagesAtom = atom<Message[]>([]);
+const messagesAtom = atom<UIMessage[]>([]);
 const inputAtom = atom<string>('');
 
 const defaultChatAtoms = makeChatAtoms({ messagesAtom });
@@ -199,28 +175,36 @@ export const ChatAtomsProvider = ({
 
 export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
   const {
+    chatIdAtom,
+
     appendAtom,
-    dataAtom,
+    streamDataAtom,
     errorAtom,
     isLoadingAtom,
 
     reloadAtom,
     stopAtom,
     addToolResultAtom,
+    resumeAtom,
 
     onErrorAtom,
     onResponseAtom,
     onFinishAtom,
     onToolCallAtom,
-    prepareRequestBodyAtom,
 
+    prepareRequestBodyAtom,
+    sendExtraMessageFieldsAtom,
     streamProtocolAtom,
+    keepLastMessageonErrorAtom,
     maxStepsAtom,
   } = useChatAtoms();
+
+  const [chatId, setChatId] = useAtom(chatIdAtom);
+
   const inputObject = useAtom(inputAtom);
   const messagesObject = useAtom(messagesAtom);
 
-  const dataObject = useAtom(dataAtom);
+  const dataObject = useAtom(streamDataAtom);
   const isLoadingObject = useAtom(isLoadingAtom);
   const errorObject = useAtom(errorAtom);
 
@@ -228,50 +212,56 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
   const reload = useSetAtom(reloadAtom);
   const stop = useSetAtom(stopAtom);
   const addToolResult = useSetAtom(addToolResultAtom);
-
-  const setStreamProtocol = useSetAtom(streamProtocolAtom);
-  const setMaxSteps = useSetAtom(maxStepsAtom);
-  if (opts.streamProtocol) setStreamProtocol(opts.streamProtocol);
-  else setStreamProtocol(RESET);
-  if (opts.maxSteps) setMaxSteps(opts.maxSteps);
-  else setMaxSteps(RESET);
+  const resume = useSetAtom(resumeAtom);
 
   const setOnFinish = useSetAtom(onFinishAtom);
   const setOnReponse = useSetAtom(onResponseAtom);
   const setOnToolCall = useSetAtom(onToolCallAtom);
   const setOnError = useSetAtom(onErrorAtom);
-  if (opts.onFinish) setOnFinish({ fn: opts.onFinish });
-  else setOnFinish(RESET);
-  if (opts.onResponse) setOnReponse({ fn: opts.onResponse });
-  else setOnReponse(RESET);
-  if (opts.onToolCall) setOnToolCall({ fn: opts.onToolCall });
-  else setOnToolCall(RESET);
-  if (opts.onError) setOnError({ fn: opts.onError });
-  else setOnError(RESET);
+
+  const setStreamProtocol = useSetAtom(streamProtocolAtom);
+  if (opts.streamProtocol) setStreamProtocol(opts.streamProtocol);
+  else setStreamProtocol(RESET);
+
+  const setMaxSteps = useSetAtom(maxStepsAtom);
+  if (opts.maxSteps) setMaxSteps(opts.maxSteps);
+  else setMaxSteps(RESET);
+
+  const setKeepLastMessageonErrorAtom = useSetAtom(keepLastMessageonErrorAtom);
+  if (opts.keepLastMessageOnError)
+    setKeepLastMessageonErrorAtom(opts.keepLastMessageOnError);
+  else setKeepLastMessageonErrorAtom(RESET);
+
+  const setSendExtraMessageFields = useSetAtom(sendExtraMessageFieldsAtom);
+  if (opts.sendExtraMessageFields)
+    setSendExtraMessageFields(opts.sendExtraMessageFields);
+  else setSendExtraMessageFields(RESET);
+
+  const setPrepareRequestBody = useSetAtom(prepareRequestBodyAtom);
+  if (opts.experimental_prepareRequestBody)
+    setPrepareRequestBody({ fn: opts.experimental_prepareRequestBody });
+  else setPrepareRequestBody(RESET);
 
   useEffect(() => {
-    if (opts.onFinish) setOnFinish(opts.onFinish);
+    if (opts.onFinish) setOnFinish({ fn: opts.onFinish });
   }, [opts.onFinish, setOnFinish]);
 
   useEffect(() => {
-    if (opts.onResponse) setOnReponse(opts.onResponse);
+    if (opts.onResponse) setOnReponse({ fn: opts.onResponse });
   }, [opts.onResponse, setOnReponse]);
 
   useEffect(() => {
-    if (opts.onToolCall) setOnToolCall(opts.onToolCall);
+    if (opts.onToolCall) setOnToolCall({ fn: opts.onToolCall });
   }, [opts.onToolCall, setOnToolCall]);
 
   useEffect(() => {
-    if (opts.onError) setOnError(opts.onError);
+    if (opts.onError) setOnError({ fn: opts.onError });
   }, [opts.onError, setOnError]);
 
-  // Handle id changes - clear messages when id changes
+  // Handle id changes
   useEffect(() => {
-    if (opts.id) {
-      messagesObject[1]([]);
-      dataObject[1]([]);
-    }
-  }, [opts.id, messagesObject, dataObject]);
+    if (opts.id) setChatId(opts.id);
+  }, [opts.id, chatId, setChatId]);
 
   const handleSubmit = useCallback(
     (
@@ -301,6 +291,8 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
   };
 
   return {
+    id: opts.id ?? chatId,
+
     // state
     get isLoading() {
       return isLoadingObject[0];
@@ -331,6 +323,7 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
     append,
     reload,
     stop,
+    experimental_resume: resume,
   };
 };
 
@@ -338,7 +331,7 @@ const {
   // data containers,
   isLoadingAtom,
   errorAtom,
-  dataAtom,
+  streamDataAtom,
 
   // actions
   stopAtom,
@@ -354,7 +347,7 @@ const {
 
 export {
   appendAtom,
-  dataAtom,
+  streamDataAtom,
   errorAtom,
   isLoadingAtom,
   messagesAtom,
