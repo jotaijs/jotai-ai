@@ -5,7 +5,6 @@
 import type { ReactNode } from 'react';
 import {
   type ChatRequestOptions,
-  type IdGenerator,
   type JSONValue,
   type Message,
   type UIMessage,
@@ -21,22 +20,25 @@ import {
   useEffect,
 } from 'react';
 
-import { atom, useSetAtom } from 'jotai';
-import { useAtom } from 'jotai-lazy';
-import { RESET } from 'jotai/utils';
+import { useAtom, useSetAtom } from 'jotai';
+import { atomWithReset, RESET } from 'jotai/utils';
 
 import { makeChatAtoms } from '../make-chat-atoms';
 
 export type UseChatOptions = Pick<
   MakeChatAtomsOptions,
   | 'api'
-  | 'id'
   | 'streamProtocol'
   | 'keepLastMessageOnError'
   | 'maxSteps'
   | 'sendExtraMessageFields'
   | 'experimental_prepareRequestBody'
 > & {
+  /**
+   * Unique ID for **chat**
+   */
+  id?: string;
+
   /**
    * Initial messages of the chat. Useful to load an existing chat history.
    */
@@ -151,10 +153,12 @@ export type UseChatReturn = {
   error?: Error;
 } & UseChatActions;
 
-const messagesAtom = atom<UIMessage[]>([]);
-const inputAtom = atom<string>('');
-
-const defaultChatAtoms = makeChatAtoms({ messagesAtom });
+const defaultInputAtom = atomWithReset<string>('');
+const defaultMessagesAtom = atomWithReset<UIMessage[]>([]);
+const defaultChatAtoms = makeChatAtoms({
+  messagesAtom: defaultMessagesAtom,
+  inputAtom: defaultInputAtom,
+});
 const ChatAtomsContext = createContext<ReturnType<typeof makeChatAtoms> | null>(
   null,
 );
@@ -186,6 +190,8 @@ export const ChatAtomsProvider = ({
 export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
   const {
     chatIdAtom,
+    messagesAtom,
+    inputAtom,
 
     appendAtom,
     streamDataAtom,
@@ -210,8 +216,7 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
     maxStepsAtom,
   } = useChatAtoms();
 
-  const [chatId, setChatId] = useAtom(chatIdAtom);
-
+  const chatObject = useAtom(chatIdAtom);
   const inputObject = useAtom(inputAtom);
   const messagesObject = useAtom(messagesAtom);
 
@@ -281,19 +286,18 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
   //   if (opts.onError) setOnError({ fn: opts.onError });
   // }, [opts.onError, setOnError]);
 
-  // // // Handle id changes and reset messages
-  // // useEffect(() => {
-  // //   if (opts.id) {
-  // //     setChatId(opts.id);
-  // //   }
-  // // }, [opts.id, chatId, setChatId]);
+  // Handle id changes and reset messages
+  if (opts.id && opts.id !== chatObject[0]) {
+    chatObject[1](opts.id);
+    messagesObject[1](RESET);
+    inputObject[1](RESET);
+  }
 
-  // // // Handle initialMessages changes
-  // // useEffect(() => {
-  // //   if (opts.initialMessages) {
-  // //     messagesObject[1](opts.initialMessages);
-  // //   }
-  // // }, [opts.initialMessages, messagesObject]);
+  // Handle initialMessages changes
+
+  if (opts.initialMessages) {
+    messagesObject[1](opts.initialMessages);
+  }
 
   const handleSubmit = useCallback(
     (
@@ -323,7 +327,9 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
   };
 
   return {
-    id: opts.id ?? chatId,
+    get id() {
+      return opts.id ?? chatObject[0];
+    },
 
     // state
     get isLoading() {
@@ -363,6 +369,11 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
 };
 
 const {
+  // basic abstractions
+  messagesAtom,
+  chatIdAtom,
+  inputAtom,
+
   // data containers,
   isLoadingAtom,
   errorAtom,
@@ -381,11 +392,13 @@ const {
 } = defaultChatAtoms;
 
 export {
+  messagesAtom,
+  chatIdAtom,
+  inputAtom,
   appendAtom,
   streamDataAtom,
   errorAtom,
   isLoadingAtom,
-  messagesAtom,
   onErrorAtom,
   onFinishAtom,
   onResponseAtom,

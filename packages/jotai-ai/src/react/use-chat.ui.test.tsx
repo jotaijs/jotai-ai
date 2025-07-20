@@ -29,7 +29,7 @@ const server = createTestServer({
   '/api/chat/123/stream': {},
 });
 
-export const setupTestComponent = (
+const setupTestComponent = (
   TestComponent: React.ComponentType<any>,
   {
     init,
@@ -38,7 +38,7 @@ export const setupTestComponent = (
   } = {},
 ) => {
   beforeEach(() => {
-    render(<>{init?.(TestComponent) ?? <TestComponent />}</>);
+    render(init?.(TestComponent) ?? <TestComponent />);
   });
 
   afterEach(() => {
@@ -47,55 +47,55 @@ export const setupTestComponent = (
   });
 };
 
-// describe('initial messages', () => {
-//   setupTestComponent(
-//     ({ id: idParam }: { id: string }) => {
-//       const [id, setId] = useState<string>(idParam);
-//       const {
-//         messages,
-//         status,
-//         id: idKey,
-//       } = useChat({
-//         id,
-//         initialMessages: [
-//           {
-//             id: 'id-0',
-//             role: 'user',
-//             content: 'hello',
-//             parts: [{ text: 'hi', type: 'text' }],
-//           },
-//         ],
-//       });
+describe('initial messages', () => {
+  setupTestComponent(
+    ({ id: idParam }: { id: string }) => {
+      const [id, _] = useState<string>(idParam);
+      const {
+        messages,
+        status,
+        id: idKey,
+      } = useChat({
+        id,
+        initialMessages: [
+          {
+            id: 'id-0',
+            role: 'user',
+            content: 'hello',
+            parts: [{ text: 'hi', type: 'text' }],
+          },
+        ],
+      });
 
-//       return (
-//         <div>
-//           <div data-testid="id">{idKey}</div>
-//           <div data-testid="status">{status.toString()}</div>
-//           <div data-testid="messages">{JSON.stringify(messages, null, 2)}</div>
-//         </div>
-//       );
-//     },
-//     {
-//       // use a random id to avoid conflicts:
-//       init: TestComponent => <TestComponent id={`first-${mockId()()}`} />,
-//     },
-//   );
+      return (
+        <div>
+          <div data-testid="id">{idKey}</div>
+          <div data-testid="status">{status.toString()}</div>
+          <div data-testid="messages">{JSON.stringify(messages, null, 2)}</div>
+        </div>
+      );
+    },
+    {
+      // use a random id to avoid conflicts:
+      init: TestComponent => <TestComponent id={`first-${mockId()()}`} />,
+    },
+  );
 
-//   it('should show initial messages', async () => {
-//     await waitFor(() => {
-//       expect(
-//         JSON.parse(screen.getByTestId('messages').textContent ?? ''),
-//       ).toStrictEqual([
-//         {
-//           role: 'user',
-//           parts: [{ text: 'hi', type: 'text' }],
-//           content: 'hello',
-//           id: 'id-0',
-//         },
-//       ]);
-//     });
-//   });
-// });
+  it('should show initial messages', async () => {
+    await waitFor(() => {
+      expect(
+        JSON.parse(screen.getByTestId('messages').textContent ?? ''),
+      ).toStrictEqual([
+        {
+          role: 'user',
+          parts: [{ text: 'hi', type: 'text' }],
+          content: 'hello',
+          id: 'id-0',
+        },
+      ]);
+    });
+  });
+});
 
 describe('data protocol stream', () => {
   let onFinishCalls: Array<{
@@ -367,18 +367,11 @@ describe('data protocol stream', () => {
 
       await userEvent.click(screen.getByTestId('do-append'));
 
-      expect(await server.calls[0]?.requestBody).toStrictEqual({
-        id: screen.getByTestId('id').textContent,
-        messages: [
-          {
-            role: 'user',
-            content: 'hi',
-            parts: [{ text: 'hi', type: 'text' }],
-          },
-        ],
-      });
+      const rb = await server.calls[0]?.requestBody;
+      expect(rb.id).toBe(screen.getByTestId('id').textContent);
+      expect(rb.messages[0]).toHaveProperty('id');
+      expect(rb.messages[0]).toHaveProperty('createdAt');
     });
-
     it('should clear out messages when the id changes', async () => {
       server.urls['/api/chat'].response = {
         type: 'stream-chunks',
@@ -1322,6 +1315,8 @@ describe('file attachments with data url', () => {
         {
           role: 'user',
           content: 'Message with text attachment',
+          id: expect.any(String),
+          createdAt: expect.any(String),
           experimental_attachments: [
             {
               name: 'test.txt',
@@ -1376,6 +1371,8 @@ describe('file attachments with data url', () => {
         {
           role: 'user',
           content: 'Message with image attachment',
+          id: expect.any(String),
+          createdAt: expect.any(String),
           experimental_attachments: [
             {
               name: 'test.png',
@@ -1487,6 +1484,8 @@ describe('file attachments with url', () => {
         {
           role: 'user',
           content: 'Message with image attachment',
+          id: expect.any(String),
+          createdAt: expect.any(String),
           experimental_attachments: [
             {
               name: 'test.png',
@@ -1572,6 +1571,8 @@ describe('attachments with empty submit', () => {
         {
           role: 'user',
           content: '',
+          id: expect.any(String),
+          createdAt: expect.any(String),
           experimental_attachments: [
             {
               name: 'test.png',
@@ -1661,6 +1662,8 @@ describe('append', () => {
         id: expect.any(String),
         messages: [
           {
+            id: expect.any(String),
+            createdAt: expect.any(String),
             role: 'user',
             content: 'Message with image attachment',
             experimental_attachments: [
@@ -1754,6 +1757,8 @@ describe('append', () => {
         id: expect.any(String),
         messages: [
           {
+            id: expect.any(String),
+            createdAt: expect.any(String),
             role: 'user',
             content: 'Message with image attachment',
             experimental_attachments: [
@@ -1831,6 +1836,8 @@ describe('reload', () => {
       id: expect.any(String),
       messages: [
         {
+          id: expect.any(String),
+          createdAt: expect.any(String),
           content: 'hi',
           role: 'user',
           parts: [{ text: 'hi', type: 'text' }],
@@ -1894,6 +1901,8 @@ describe('test sending additional fields during message submission', () => {
       id: expect.any(String),
       messages: [
         {
+          id: expect.any(String),
+          createdAt: expect.any(String),
           role: 'user',
           content: 'hi',
           annotations: ['this is an annotation'],

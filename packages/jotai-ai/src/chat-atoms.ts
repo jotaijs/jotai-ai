@@ -1,20 +1,20 @@
+import type { FormEvent } from 'react';
 import type { FetchFunction } from '@ai-sdk/provider-utils';
 import { generateId as generateIdImpl } from '@ai-sdk/provider-utils';
 import {
-  callChatApi,
   type ChatRequest,
   type ChatRequestOptions,
   type CreateMessage,
   type JSONValue,
   type Message,
   type UseChatOptions,
+  callChatApi,
 } from '@ai-sdk/ui-utils';
 import { atom, type Getter, type Setter } from 'jotai/vanilla';
-import type { FormEvent } from 'react';
 import {
   countTrailingAssistantMessages,
-  isAssistantMessageWithCompletedToolCalls,
   isPromiseLike,
+  isAssistantMessageWithCompletedToolCalls,
 } from './utils';
 
 export function chatAtoms(
