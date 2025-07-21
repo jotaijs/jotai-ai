@@ -2,7 +2,7 @@
 // aligned commit: 6c59ae7d7162140fcf37fc6afbec4486e82c50bc (codebase, not for single file)
 'use client';
 
-import type { ReactNode } from 'react';
+import type { ReactNode, Dispatch, ChangeEvent, SetStateAction } from 'react';
 import {
   type ChatRequestOptions,
   type JSONValue,
@@ -20,7 +20,7 @@ import {
   useEffect,
 } from 'react';
 
-import { useAtom, useSetAtom } from 'jotai';
+import { useAtom, useSetAtom } from 'jotai-lazy';
 import { atomWithReset, RESET } from 'jotai/utils';
 
 import { makeChatAtoms } from '../make-chat-atoms';
@@ -88,6 +88,11 @@ type UseChatActions = {
     toolCallId: string;
     result: any;
   }) => void;
+
+  /**
+   * `jotai-ai` only, reset state to initial.
+   */
+  reset: () => void;
 };
 
 export type UseChatReturn = {
@@ -110,12 +115,10 @@ export type UseChatReturn = {
   /** The current value of the input */
   input: string;
   /** setState-powered method to update the input value */
-  setInput: React.Dispatch<React.SetStateAction<string>>;
+  setInput: Dispatch<SetStateAction<string>>;
   /** An input/textarea-ready onChange handler to control the value of the input */
   handleInputChange: (
-    e:
-      | React.ChangeEvent<HTMLInputElement>
-      | React.ChangeEvent<HTMLTextAreaElement>,
+    e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLTextAreaElement>,
   ) => void;
   /** Form submission handler to automatically reset input and append a user message */
   handleSubmit: (
@@ -192,9 +195,9 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
     chatIdAtom,
     messagesAtom,
     inputAtom,
+    streamDataAtom,
 
     appendAtom,
-    streamDataAtom,
     errorAtom,
     isLoadingAtom,
     statusAtom,
@@ -203,6 +206,7 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
     stopAtom,
     addToolResultAtom,
     resumeAtom,
+    resetAtom,
 
     onErrorAtom,
     onResponseAtom,
@@ -230,6 +234,7 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
   const stop = useSetAtom(stopAtom);
   const addToolResult = useSetAtom(addToolResultAtom);
   const resume = useSetAtom(resumeAtom);
+  const reset = useSetAtom(resetAtom);
 
   const setOnFinish = useSetAtom(onFinishAtom);
   if (opts.onFinish) setOnFinish({ fn: opts.onFinish });
@@ -270,32 +275,14 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
     setPrepareRequestBody({ fn: opts.experimental_prepareRequestBody });
   else setPrepareRequestBody(RESET);
 
-  // useEffect(() => {
-  //   if (opts.onFinish) setOnFinish({ fn: opts.onFinish });
-  // }, [opts.onFinish, setOnFinish]);
-
-  // useEffect(() => {
-  //   if (opts.onResponse) setOnReponse({ fn: opts.onResponse });
-  // }, [opts.onResponse, setOnReponse]);
-
-  // useEffect(() => {
-  //   if (opts.onToolCall) setOnToolCall({ fn: opts.onToolCall });
-  // }, [opts.onToolCall, setOnToolCall]);
-
-  // useEffect(() => {
-  //   if (opts.onError) setOnError({ fn: opts.onError });
-  // }, [opts.onError, setOnError]);
-
   // Handle id changes and reset messages
   if (opts.id && opts.id !== chatObject[0]) {
     chatObject[1](opts.id);
-    messagesObject[1](RESET);
-    inputObject[1](RESET);
+    reset();
   }
 
-  // Handle initialMessages changes
-
-  if (opts.initialMessages) {
+  // Handle `initialMessages` field, but cannot reset while changing
+  if (opts.initialMessages && messagesObject[0].length == 0) {
     messagesObject[1](opts.initialMessages);
   }
 
@@ -317,7 +304,7 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
       append(userMessage, options).catch((_error: Error) => {
         // TODO: not implemented
       });
-      setInput('');
+      setInput(RESET);
     },
     [inputObject, append],
   );
@@ -364,6 +351,7 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
     append,
     reload,
     stop,
+    reset,
     experimental_resume: resume,
   };
 };
@@ -373,16 +361,20 @@ const {
   messagesAtom,
   chatIdAtom,
   inputAtom,
+  streamDataAtom,
 
-  // data containers,
+  // status flags
   isLoadingAtom,
   errorAtom,
-  streamDataAtom,
+  statusAtom,
+  initMessagesChangedAtom,
 
   // actions
   stopAtom,
   appendAtom,
   reloadAtom,
+  resumeAtom,
+  resetAtom,
 
   // handlers
   onErrorAtom,
@@ -392,17 +384,22 @@ const {
 } = defaultChatAtoms;
 
 export {
+  // sorted to follow same seq from `defaultChatAtoms` exports
   messagesAtom,
   chatIdAtom,
   inputAtom,
-  appendAtom,
   streamDataAtom,
-  errorAtom,
   isLoadingAtom,
+  errorAtom,
+  statusAtom,
+  initMessagesChangedAtom,
+  stopAtom,
+  appendAtom,
+  reloadAtom,
+  resumeAtom,
+  resetAtom,
   onErrorAtom,
-  onFinishAtom,
   onResponseAtom,
   onToolCallAtom,
-  reloadAtom,
-  stopAtom,
+  onFinishAtom,
 };

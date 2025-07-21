@@ -12,10 +12,7 @@ import type {
   WritableAtom,
   Setter,
 } from 'jotai/vanilla';
-import type { RESET } from 'jotai/utils';
 
-import { atomWithReset } from 'jotai/utils';
-import { atom } from 'jotai/vanilla';
 import {
   callChatApi,
   fillMessageParts,
@@ -24,7 +21,12 @@ import {
   isAssistantMessageWithCompletedToolCalls,
   prepareAttachmentsForRequest,
   getMessageParts,
+  updateToolCallResult,
 } from '@ai-sdk/ui-utils';
+
+import { atomWithReset, RESET } from 'jotai/utils';
+import { atom } from 'jotai/vanilla';
+
 import { defaultGenerateId } from './utils';
 
 type ExtraMetadata = {
@@ -207,6 +209,11 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
   const generateId = opts.generateId ?? defaultGenerateId;
 
   const { messagesAtom } = opts;
+
+  // need to make a copy of `messagesAtom` to store `initialMessages`
+  // const initMessagesAtom =
+  const initMessagesChangedAtom = atom(false);
+
   const inputAtom = opts.inputAtom ?? atomWithReset('');
   const chatIdAtom = opts.chatIdAtom ?? atom(generateId());
 
@@ -354,6 +361,8 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
             : prevUIMessages),
           message,
         ]);
+        set(initMessagesChangedAtom, true);
+
         if (data && data.length > 0)
           set(streamDataAtom, [...(existingData ?? []), ...data]);
       },
@@ -444,8 +453,8 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
         attachmentsForRequest.length > 0 ? attachmentsForRequest : undefined,
       parts: getMessageParts(message),
     };
-    const prevMessages = get(messagesAtom);
 
+    const prevMessages = get(messagesAtom);
     const chatRequest = {
       messages: [...prevMessages, newMessage],
       headers,
@@ -534,7 +543,18 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
   const resumeAtom = atom(null, (get, set) => {
     const messages = get(messagesAtom);
 
-    return triggerRequest(get, set, { messages });
+    return triggerRequest(get, set, { messages }, 'resume');
+  });
+  const resetAtom = atom(null, (get, set) => {
+    set(messagesAtom, RESET);
+    set(inputAtom, RESET);
+    set(streamDataAtom, undefined);
+
+    set(statusAtom, 'ready');
+    set(isLoadingAtom, false);
+    set(initMessagesChangedAtom, false);
+    set(errorAtom, undefined);
+    set(abortControllerAtom, null);
   });
 
   const addToolResultAtom = atom(
@@ -551,29 +571,26 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
       },
     ) => {
       const messages = get(messagesAtom);
-      const updatedMessages = messages.map((message, index, arr) =>
-        // update the tool calls in the last assistant message:
-        index === arr.length - 1 &&
-        message.role === 'assistant' &&
-        message.toolInvocations
-          ? {
-              ...message,
-              toolInvocations: message.toolInvocations.map(toolInvocation =>
-                toolInvocation.toolCallId === toolCallId
-                  ? {
-                      ...toolInvocation,
-                      result,
-                      state: 'result' as const,
-                    }
-                  : toolInvocation,
-              ),
-            }
-          : message,
-      );
+      const status = get(statusAtom);
+      if (messages.length === 0) return;
+
+      updateToolCallResult({
+        messages,
+        toolCallId,
+        toolResult: result,
+      });
+
+      const updatedMessages = [
+        ...messages.slice(0, messages.length - 1),
+        // would be mutated by `updateToolCallResult`?
+        { ...messages[messages.length - 1] } as unknown as UIMessage,
+      ];
 
       set(messagesAtom, updatedMessages);
 
-      if (updatedMessages.length === 0) return;
+      // when the request is ongoing, the auto-submit will be triggered after the request is finished
+      if (status === 'submitted' || status === 'streaming') return;
+
       // auto-submit when all tool calls in the last assistant message have results:
       const lastMessage = updatedMessages[updatedMessages.length - 1];
       if (isAssistantMessageWithCompletedToolCalls(lastMessage!)) {
@@ -587,12 +604,13 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
     chatIdAtom,
     inputAtom,
     messagesAtom,
-
-    // data containers
     streamDataAtom,
+
+    // status flags
     isLoadingAtom: atom(get => get(isLoadingAtom)),
     errorAtom: atom(get => get(errorAtom)),
     statusAtom: atom(get => get(statusAtom)),
+    initMessagesChangedAtom: atom(get => get(initMessagesChangedAtom)),
 
     // actions
     stopAtom,
@@ -600,6 +618,7 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
     reloadAtom,
     addToolResultAtom,
     resumeAtom,
+    resetAtom,
 
     // configurable handlers
     onResponseAtom,
