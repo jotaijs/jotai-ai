@@ -6,12 +6,7 @@ import type {
   JSONValue,
 } from '@ai-sdk/ui-utils';
 import type { LanguageModelUsage, CreateMessage, Message, UIMessage } from 'ai';
-import type {
-  Getter,
-  PrimitiveAtom,
-  WritableAtom,
-  Setter,
-} from 'jotai/vanilla';
+import type { Getter, Setter } from 'jotai/vanilla';
 
 import {
   callChatApi,
@@ -24,7 +19,6 @@ import {
   updateToolCallResult,
 } from '@ai-sdk/ui-utils';
 
-import { atomWithReset, RESET } from 'jotai/utils';
 import { atom } from 'jotai/vanilla';
 
 import { defaultGenerateId } from './utils';
@@ -119,39 +113,39 @@ export type Handlers = {
   onError?: (error: Error) => void;
 };
 
-type SetStateActionWithReset<Value> =
-  | Value
-  | typeof RESET
-  | ((prev: Value) => Value | typeof RESET);
-type WithInitialValue<Value> = {
-  init: Value;
-};
-type ResetableAtom<Value> = WritableAtom<
-  Value,
-  [SetStateActionWithReset<Value>],
-  void
-> &
-  WithInitialValue<Value>;
-
 export type MakeChatAtomsOptions = {
-  // must be provided
-  messagesAtom: ResetableAtom<UIMessage[]>;
+  /**
+   * deprecated
+   */
+  // messagesAtom: ResetableAtom<UIMessage[]>;
+  // inputAtom: ResetableAtom<string>;
 
-  // optional
-  inputAtom?: ResetableAtom<string>;
-  chatIdAtom?: PrimitiveAtom<string>;
+  /**
+   * A unique identifier for the chat. If not provided, a random one will be
+   * generated. When provided, the `useChat` hook with the same `id` will
+   * have shared states across components.
+   */
+  id?: string;
+  /**
+   * Optional function to generate a unique ID for each request and chat Id when missing.
+   */
+  generateId?: () => string;
+
+  /**
+   * Initial messages of the chat. Useful to load an existing chat history.
+   * if you pass async function or promise, you will need a suspense boundary
+   */
+  initialMessages?: UIMessage[];
+  /**
+   * Initial input of the chat.
+   */
+  initialInput?: string;
 
   /**
    * The API endpoint that accepts a `{ messages: Message[] }` object and returns
    * a stream of tokens of the AI chat response. Defaults to `/api/chat`.
    */
   api?: string;
-
-  /**
-   * Optional function to generate a unique ID for each request and chat Id when missing.
-   */
-  generateId?: () => string;
-
   /**
    * Custom fetch implementation. You can use it as a middleware to intercept requests,
    * or to provide a custom fetch implementation for e.g. testing.
@@ -204,20 +198,21 @@ export type MakeChatAtomsOptions = {
 } & ExtraMetadata &
   Handlers;
 
-export function makeChatAtoms(opts: MakeChatAtomsOptions) {
+export function makeChatAtoms(opts: MakeChatAtomsOptions = {}) {
   const api = opts.api ?? '/api/chat';
   const generateId = opts.generateId ?? defaultGenerateId;
 
-  const { messagesAtom } = opts;
+  const { initialInput, initialMessages } = opts;
 
-  // need to make a copy of `messagesAtom` to store `initialMessages`
-  // const initMessagesAtom =
-  const initMessagesChangedAtom = atom(false);
+  const initialMessagesAtom = atom(initialMessages);
+  const initialInputAtom = atom(initialInput);
+  const messagesAtom = atom<UIMessage[]>(initialMessages ?? []);
+  const inputAtom = atom(initialInput ?? '');
 
-  const inputAtom = opts.inputAtom ?? atomWithReset('');
-  const chatIdAtom = opts.chatIdAtom ?? atom(generateId());
+  const chatId = opts.id ?? generateId();
+  const chatIdAtom = atom(chatId);
 
-  const streamProtocolAtom = atomWithReset(opts.streamProtocol ?? 'data');
+  const streamProtocolAtom = atom(opts.streamProtocol ?? 'data');
   const streamDataAtom = atom<JSONValue[] | undefined>(undefined);
   /** dataAtom is deprecated to support streamDataAtom */
   // const dataAtom = atom<JSONValue[] | undefined>(undefined);
@@ -229,31 +224,27 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
   const errorAtom = atom<Error | undefined>(undefined);
   const abortControllerAtom = atom<AbortController | null>(null);
 
-  const sendExtraMessageFieldsAtom = atomWithReset(
-    opts.sendExtraMessageFields ?? true,
-  );
-  const credentialsAtom = atomWithReset(opts.credentials);
-  const headersAtom = atomWithReset(opts.headers);
-  const bodyAtom = atomWithReset(opts.body);
-  const prepareRequestBodyAtom = atomWithReset<
+  const sendExtraMessageFieldsAtom = atom(opts.sendExtraMessageFields ?? true);
+  const credentialsAtom = atom(opts.credentials);
+  const headersAtom = atom(opts.headers);
+  const bodyAtom = atom(opts.body);
+  const prepareRequestBodyAtom = atom<
     FnObj<MakeChatAtomsOptions['experimental_prepareRequestBody']>
   >({ fn: opts.experimental_prepareRequestBody });
 
-  const maxStepsAtom = atomWithReset(opts.maxSteps ?? 1);
-  const keepLastMessageonErrorAtom = atomWithReset(
-    opts.keepLastMessageOnError ?? false,
-  );
+  const maxStepsAtom = atom(opts.maxSteps ?? 1);
+  const keepLastMessageonErrorAtom = atom(opts.keepLastMessageOnError ?? false);
 
-  const onFinishAtom = atomWithReset<FnObj<Handlers['onFinish']>>({
+  const onFinishAtom = atom<FnObj<Handlers['onFinish']>>({
     fn: opts.onFinish,
   });
-  const onResponseAtom = atomWithReset<FnObj<Handlers['onResponse']>>({
+  const onResponseAtom = atom<FnObj<Handlers['onResponse']>>({
     fn: opts.onResponse,
   });
-  const onToolCallAtom = atomWithReset<FnObj<Handlers['onToolCall']>>({
+  const onToolCallAtom = atom<FnObj<Handlers['onToolCall']>>({
     fn: opts.onToolCall,
   });
-  const onErrorAtom = atomWithReset<FnObj<Handlers['onError']>>({
+  const onErrorAtom = atom<FnObj<Handlers['onError']>>({
     fn: opts.onError,
   });
 
@@ -361,7 +352,6 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
             : prevUIMessages),
           message,
         ]);
-        set(initMessagesChangedAtom, true);
 
         if (data && data.length > 0)
           set(streamDataAtom, [...(existingData ?? []), ...data]);
@@ -464,15 +454,11 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
     return triggerRequest(get, set, chatRequest);
   };
 
-  const reload = async (
-    get: Getter,
-    set: Setter,
-    options?: ChatRequestOptions,
-  ) => {
+  const reload = (get: Getter, set: Setter, options?: ChatRequestOptions) => {
     if (get(errorAtom)) set(errorAtom, undefined);
 
     const messages = get(messagesAtom);
-    if (messages.length === 0) return null;
+    if (messages.length === 0) return;
 
     const { headers, body, data, experimental_attachments, allowEmptySubmit } =
       options ?? {};
@@ -525,14 +511,11 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
       );
     },
   );
-  const reloadAtom = atom(
-    null,
-    async (get, set, options?: ChatRequestOptions) => {
-      return reload(get, set, options).catch((error: Error) =>
-        maybeThrowOnError(get, set, error),
-      );
-    },
-  );
+  const reloadAtom = atom(null, (get, set, options?: ChatRequestOptions) => {
+    return reload(get, set, options)?.catch((error: Error) =>
+      maybeThrowOnError(get, set, error),
+    );
+  });
   const stopAtom = atom(null, (get, set) => {
     const abortController = get(abortControllerAtom);
     if (abortController) {
@@ -546,13 +529,12 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
     return triggerRequest(get, set, { messages }, 'resume');
   });
   const resetAtom = atom(null, (get, set) => {
-    set(messagesAtom, RESET);
-    set(inputAtom, RESET);
+    set(messagesAtom, get(initialMessagesAtom) ?? []);
+    set(inputAtom, get(initialInputAtom) ?? '');
     set(streamDataAtom, undefined);
 
     set(statusAtom, 'ready');
     set(isLoadingAtom, false);
-    set(initMessagesChangedAtom, false);
     set(errorAtom, undefined);
     set(abortControllerAtom, null);
   });
@@ -607,10 +589,11 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
     streamDataAtom,
 
     // status flags
+    initialMessagesAtom,
+    initialInputAtom,
     isLoadingAtom: atom(get => get(isLoadingAtom)),
     errorAtom: atom(get => get(errorAtom)),
     statusAtom: atom(get => get(statusAtom)),
-    initMessagesChangedAtom: atom(get => get(initMessagesChangedAtom)),
 
     // actions
     stopAtom,

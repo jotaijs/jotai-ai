@@ -3,25 +3,19 @@
 'use client';
 
 import type { ReactNode, Dispatch, ChangeEvent, SetStateAction } from 'react';
-import {
-  type ChatRequestOptions,
-  type JSONValue,
-  type Message,
-  type UIMessage,
-  type CreateMessage,
+import type {
+  ChatRequestOptions,
+  JSONValue,
+  Message,
+  UIMessage,
+  CreateMessage,
 } from 'ai';
 import type { MakeChatAtomsOptions, Handlers } from '../make-chat-atoms';
 
-import {
-  useCallback,
-  createContext,
-  useContext,
-  createElement,
-  useEffect,
-} from 'react';
+import { useCallback, createContext, useContext, createElement } from 'react';
 
+import { isDeepEqualData } from '@ai-sdk/ui-utils';
 import { useAtom, useSetAtom } from 'jotai-lazy';
-import { atomWithReset, RESET } from 'jotai/utils';
 
 import { makeChatAtoms } from '../make-chat-atoms';
 
@@ -156,12 +150,9 @@ export type UseChatReturn = {
   error?: Error;
 } & UseChatActions;
 
-const defaultInputAtom = atomWithReset<string>('');
-const defaultMessagesAtom = atomWithReset<UIMessage[]>([]);
-const defaultChatAtoms = makeChatAtoms({
-  messagesAtom: defaultMessagesAtom,
-  inputAtom: defaultInputAtom,
-});
+// const defaultInputAtom = atomWithReset<string>('');
+// const defaultMessagesAtom = atomWithReset<UIMessage[]>([]);
+const defaultChatAtoms = makeChatAtoms();
 const ChatAtomsContext = createContext<ReturnType<typeof makeChatAtoms> | null>(
   null,
 );
@@ -197,6 +188,8 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
     inputAtom,
     streamDataAtom,
 
+    initialMessagesAtom,
+    initialInputAtom,
     appendAtom,
     errorAtom,
     isLoadingAtom,
@@ -223,8 +216,10 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
   const chatObject = useAtom(chatIdAtom);
   const inputObject = useAtom(inputAtom);
   const messagesObject = useAtom(messagesAtom);
-
   const dataObject = useAtom(streamDataAtom);
+
+  const initialMessagesObject = useAtom(initialMessagesAtom);
+  const initialInputObject = useAtom(initialInputAtom);
   const isLoadingObject = useAtom(isLoadingAtom);
   const errorObject = useAtom(errorAtom);
   const statusObject = useAtom(statusAtom);
@@ -238,52 +233,51 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
 
   const setOnFinish = useSetAtom(onFinishAtom);
   if (opts.onFinish) setOnFinish({ fn: opts.onFinish });
-  else setOnFinish(RESET);
 
   const setOnReponse = useSetAtom(onResponseAtom);
   if (opts.onResponse) setOnReponse({ fn: opts.onResponse });
-  else setOnReponse(RESET);
 
   const setOnToolCall = useSetAtom(onToolCallAtom);
   if (opts.onToolCall) setOnToolCall({ fn: opts.onToolCall });
-  else setOnToolCall(RESET);
 
   const setOnError = useSetAtom(onErrorAtom);
   if (opts.onError) setOnError({ fn: opts.onError });
-  else setOnError(RESET);
 
   const setStreamProtocol = useSetAtom(streamProtocolAtom);
   if (opts.streamProtocol) setStreamProtocol(opts.streamProtocol);
-  else setStreamProtocol(RESET);
 
   const setMaxSteps = useSetAtom(maxStepsAtom);
   if (opts.maxSteps) setMaxSteps(opts.maxSteps);
-  else setMaxSteps(RESET);
 
   const setKeepLastMessageonErrorAtom = useSetAtom(keepLastMessageonErrorAtom);
   if (opts.keepLastMessageOnError)
     setKeepLastMessageonErrorAtom(opts.keepLastMessageOnError);
-  else setKeepLastMessageonErrorAtom(RESET);
 
   const setSendExtraMessageFields = useSetAtom(sendExtraMessageFieldsAtom);
   if (opts.sendExtraMessageFields)
     setSendExtraMessageFields(opts.sendExtraMessageFields);
-  else setSendExtraMessageFields(RESET);
 
   const setPrepareRequestBody = useSetAtom(prepareRequestBodyAtom);
   if (opts.experimental_prepareRequestBody)
     setPrepareRequestBody({ fn: opts.experimental_prepareRequestBody });
-  else setPrepareRequestBody(RESET);
 
-  // Handle id changes and reset messages
+  // Handle id changes and reset all
   if (opts.id && opts.id !== chatObject[0]) {
     chatObject[1](opts.id);
     reset();
   }
 
-  // Handle `initialMessages` field, but cannot reset while changing
-  if (opts.initialMessages && messagesObject[0].length == 0) {
-    messagesObject[1](opts.initialMessages);
+  // Handle `initialMessages` and `initialInput` field, reset all
+  if (
+    opts.initialMessages &&
+    !isDeepEqualData(opts.initialMessages, initialMessagesObject[0])
+  ) {
+    initialMessagesObject[1](opts.initialMessages);
+    reset();
+  }
+  if (opts.initialInput && opts.initialInput !== initialInputObject[0]) {
+    initialInputObject[1](opts.initialInput);
+    reset();
   }
 
   const handleSubmit = useCallback(
@@ -304,7 +298,7 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
       append(userMessage, options).catch((_error: Error) => {
         // TODO: not implemented
       });
-      setInput(RESET);
+      setInput(initialInputObject[0] ?? '');
     },
     [inputObject, append],
   );
@@ -364,10 +358,11 @@ const {
   streamDataAtom,
 
   // status flags
+  initialInputAtom,
+  initialMessagesAtom,
   isLoadingAtom,
   errorAtom,
   statusAtom,
-  initMessagesChangedAtom,
 
   // actions
   stopAtom,
@@ -389,10 +384,11 @@ export {
   chatIdAtom,
   inputAtom,
   streamDataAtom,
+  initialInputAtom,
+  initialMessagesAtom,
   isLoadingAtom,
   errorAtom,
   statusAtom,
-  initMessagesChangedAtom,
   stopAtom,
   appendAtom,
   reloadAtom,
