@@ -2006,7 +2006,7 @@ describe('initialMessages', () => {
         screen.getByTestId('render-count').textContent!,
       );
 
-      // `useChat` twice + `makeChatAtom` twice
+      // initial render + useEffect rerender to set `initialMessage`. In dev mode, it will be 4.
       expect(renderCount).toBe(4);
     });
   });
