@@ -14,8 +14,10 @@ import type { MakeChatAtomsOptions, Handlers } from '../make-chat-atoms';
 
 import { useCallback, createContext, useContext, createElement } from 'react';
 
-import { isDeepEqualData } from '@ai-sdk/ui-utils';
+import { generateId, isDeepEqualData } from '@ai-sdk/ui-utils';
+import { atom } from 'jotai';
 import { useAtom, useSetAtom } from 'jotai-lazy';
+import { RESET } from 'jotai/utils';
 
 import { makeChatAtoms } from '../make-chat-atoms';
 
@@ -150,9 +152,14 @@ export type UseChatReturn = {
   error?: Error;
 } & UseChatActions;
 
-// const defaultInputAtom = atomWithReset<string>('');
-// const defaultMessagesAtom = atomWithReset<UIMessage[]>([]);
-const defaultChatAtoms = makeChatAtoms();
+const defaultInitialInputAtom = atom<string>('');
+const defaultInitialMessagesAtom = atom<UIMessage[]>([]);
+const defaultChatIdAtom = atom<string>(generateId());
+const defaultChatAtoms = makeChatAtoms({
+  chatIdAtom: defaultChatIdAtom,
+  initialInputAtom: defaultInitialInputAtom,
+  initialMessagesAtom: defaultInitialMessagesAtom,
+});
 const ChatAtomsContext = createContext<ReturnType<typeof makeChatAtoms> | null>(
   null,
 );
@@ -298,7 +305,7 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
       append(userMessage, options).catch((_error: Error) => {
         // TODO: not implemented
       });
-      setInput(initialInputObject[0] ?? '');
+      setInput(RESET);
     },
     [inputObject, append],
   );
@@ -352,14 +359,14 @@ export const useChat = (opts: UseChatOptions = {}): UseChatReturn => {
 
 const {
   // basic abstractions
-  messagesAtom,
   chatIdAtom,
+  initialInputAtom,
+  messagesAtom,
+  initialMessagesAtom,
   inputAtom,
   streamDataAtom,
 
   // status flags
-  initialInputAtom,
-  initialMessagesAtom,
   isLoadingAtom,
   errorAtom,
   statusAtom,
@@ -379,7 +386,7 @@ const {
 } = defaultChatAtoms;
 
 export {
-  // sorted to follow same seq from `defaultChatAtoms` exports
+  // sorted to follow the same seq from exports of `defaultChatAtoms`
   messagesAtom,
   chatIdAtom,
   inputAtom,

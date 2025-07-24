@@ -2,7 +2,7 @@
 // aligned commit: 6c59ae7d7162140fcf37fc6afbec4486e82c50bc (codebase, not for single file)
 /* eslint-disable @eslint-react/dom/no-missing-button-type */
 
-import type { Message } from '@ai-sdk/ui-utils';
+import type { UIMessage, Message } from '@ai-sdk/ui-utils';
 
 import { useEffect, useRef, useState } from 'react';
 
@@ -21,8 +21,8 @@ import {
   generateId,
   getTextFromDataUrl,
 } from '@ai-sdk/ui-utils';
-import { Provider } from 'jotai';
-import { useChat } from './use-chat';
+import { Provider, createStore, useSetAtom } from 'jotai';
+import { useChat, inputAtom, chatIdAtom, messagesAtom } from './use-chat';
 
 const server = createTestServer({
   '/api/chat': {},
@@ -40,7 +40,7 @@ const setupTestComponent = (
   beforeEach(() => {
     render(
       init?.(TestComponent) ?? (
-        <Provider>
+        <Provider store={createStore()}>
           <TestComponent />
         </Provider>
       ),
@@ -57,21 +57,20 @@ describe('initial messages', () => {
   setupTestComponent(
     ({ id: idParam }: { id: string }) => {
       const [id, _] = useState<string>(idParam);
-      const {
-        messages,
-        status,
-        id: idKey,
-      } = useChat({
-        id,
-        initialMessages: [
+      const setMessages = useSetAtom(messagesAtom);
+      const { messages, status, id: idKey } = useChat({ id });
+
+      useEffect(() => {
+        // initial messages on first mount
+        setMessages([
           {
             id: 'id-0',
             role: 'user',
             content: 'hello',
             parts: [{ text: 'hi', type: 'text' }],
           },
-        ],
-      });
+        ]);
+      }, [id]);
 
       return (
         <div>
@@ -373,11 +372,20 @@ describe('data protocol stream', () => {
 
       await userEvent.click(screen.getByTestId('do-append'));
 
-      const rb = await server.calls[0]?.requestBody;
-      expect(rb.id).toBe(screen.getByTestId('id').textContent);
-      expect(rb.messages[0]).toHaveProperty('id');
-      expect(rb.messages[0]).toHaveProperty('createdAt');
+      expect(await server.calls[0]?.requestBody).toStrictEqual({
+        id: screen.getByTestId('id').textContent,
+        messages: [
+          {
+            id: expect.any(String),
+            createdAt: expect.any(String),
+            role: 'user',
+            content: 'hi',
+            parts: [{ text: 'hi', type: 'text' }],
+          },
+        ],
+      });
     });
+
     it('should clear out messages when the id changes', async () => {
       server.urls['/api/chat'].response = {
         type: 'stream-chunks',
@@ -1934,9 +1942,11 @@ describe('initialMessages', () => {
     setupTestComponent(() => {
       renderCount++;
       const [derivedState, setDerivedState] = useState<string[]>([]);
+      const setMessages = useSetAtom(messagesAtom);
+      const { messages } = useChat();
 
-      const { messages } = useChat({
-        initialMessages: [
+      useEffect(() => {
+        setMessages([
           {
             id: 'test-msg-1',
             content: 'Test message',
@@ -1949,8 +1959,8 @@ describe('initialMessages', () => {
             role: 'assistant',
             parts: [],
           },
-        ],
-      });
+        ]);
+      }, []);
 
       useEffect(() => {
         setDerivedState(messages.map(m => m.content));
@@ -1996,21 +2006,29 @@ describe('initialMessages', () => {
         screen.getByTestId('render-count').textContent!,
       );
 
-      expect(renderCount).toBe(2);
+      // `useChat` twice + `makeChatAtom` twice
+      expect(renderCount).toBe(4);
     });
   });
 
   describe('changing initial messages', () => {
     setupTestComponent(() => {
-      const [_, setInitialMessages] = useState<Message[]>([
-        {
-          id: 'test-msg-1',
-          content: 'Test message 1',
-          role: 'user',
-        },
-      ]);
+      const setMessages = useSetAtom(messagesAtom);
 
       const { messages } = useChat({});
+
+      useEffect(
+        () =>
+          setMessages([
+            {
+              id: 'test-msg-1',
+              content: 'Test message 1',
+              role: 'user',
+              parts: [],
+            },
+          ]),
+        [],
+      );
 
       return (
         <div>
@@ -2021,11 +2039,12 @@ describe('initialMessages', () => {
           <button
             data-testid="do-update-initial-messages"
             onClick={() => {
-              setInitialMessages([
+              setMessages([
                 {
                   id: 'test-msg-2',
                   content: 'Test message 2',
                   role: 'user',
+                  parts: [],
                 },
               ]);
             }}
