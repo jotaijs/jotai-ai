@@ -211,32 +211,57 @@ const App = () => {
 `makeChatAtoms` is a function that creates a set of atoms for a chatbot from `messagesAtom`.
 
 ```typescript
+import { generateId } from 'ai';
 import { makeChatAtoms } from 'jotai-ai';
 
-const messagesAtom = atom<Message[]>([]);
+const chatIdAtom = atom<string>(generateId());
+const initialMessagesAtom = atom<Message[]>([]);
+const initialInputAtom = atom<string>('');
 
 const {
-  // state data containers,
+  // basic abstractions
+  inputAtom,
+  messagesAtom,
+  streamDataAtom,
+
+  // status flag containers,
   isLoadingAtom,
   errorAtom,
-  dataAtom,
+  statusAtom,
 
   // actions
   stopAtom,
   appendAtom,
   reloadAtom,
+  addToolResultAtom,
+  resumeAtom,
+  resetAtom,
 
-  // handlers
+  // configurable handlers
   onErrorAtom,
   onResponseAtom,
   onToolCallAtom,
   onFinishAtom,
-} = makeChatAtoms({ messagesAtom });
+
+  // configurable options
+  streamProtocolAtom,
+  keepLastMessageonErrorAtom,
+  maxStepsAtom,
+  sendExtraMessageFieldsAtom,
+  bodyAtom,
+  headersAtom,
+  credentialsAtom,
+  prepareRequestBodyAtom,
+} = makeChatAtoms({ chatIdAtom, initialMessagesAtom, initialInputAtom });
 ```
 
 ## useChat
 
 `useChat` is the equivalent of vercel `ai`'s `useChat` hook.
+
+> [!WARNING]
+>
+> `useChat` is a simple wrapper around `makeChatAtoms` to provide a convenient and compatible way to use, but it will cause extra rendering if not used properly. We still recommend using `makeChatAtoms` directly for better performance, which is in real `jotai` style approach.
 
 ```tsx
 import { useChat } from 'jotai-ai/react';

@@ -572,8 +572,8 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
     // basic abstractions
     chatIdAtom,
     initialInputAtom,
-    inputAtom,
     initialMessagesAtom,
+    inputAtom,
     messagesAtom,
     streamDataAtom,
 
