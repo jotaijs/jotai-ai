@@ -1,8 +1,6 @@
 import type { Message } from '@ai-sdk/ui-utils';
 
-import { generateId as defaultGenerateId } from '@ai-sdk/ui-utils';
-
-export { defaultGenerateId };
+export { generateId } from '@ai-sdk/ui-utils';
 
 export const isPromiseLike = (
   value: unknown,
@@ -21,11 +19,14 @@ export const isPromiseLike = (
  must have a result.
  */
 export function isAssistantMessageWithCompletedToolCalls(message: Message) {
+  const toolInvocationParts = message.parts?.filter(
+    part => part.type === 'tool-invocation',
+  );
   return (
     message.role === 'assistant' &&
-    message.toolInvocations &&
-    message.toolInvocations.length > 0 &&
-    message.toolInvocations.every(toolInvocation => 'result' in toolInvocation)
+    toolInvocationParts &&
+    toolInvocationParts.length > 0 &&
+    toolInvocationParts.every(part => part.toolInvocation.state === 'result')
   );
 }
 
