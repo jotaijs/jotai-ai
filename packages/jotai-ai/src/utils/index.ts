@@ -1,9 +1,6 @@
 import type { Message } from '@ai-sdk/ui-utils';
-import type { CoreToolMessage } from 'ai';
 
-import { generateId as defaultGenerateId } from '@ai-sdk/ui-utils';
-
-export { defaultGenerateId };
+export { generateId } from '@ai-sdk/ui-utils';
 
 export const isPromiseLike = (
   value: unknown,
@@ -16,51 +13,20 @@ export const isPromiseLike = (
   );
 };
 
-// Modified from https://github.com/vercel/ai-chatbot/blob/e6806aaa542c831e874681a50df39fe26c59d25e/lib/utils.ts
-export function addToolMessageToChat({
-  toolMessage,
-  messages,
-}: {
-  toolMessage: CoreToolMessage;
-  messages: Message[];
-}): Message[] {
-  return messages.map(message => {
-    if (message.toolInvocations) {
-      return {
-        ...message,
-        toolInvocations: message.toolInvocations.map(toolInvocation => {
-          const toolResult = toolMessage.content.find(
-            tool => tool.toolCallId === toolInvocation.toolCallId,
-          );
-
-          if (toolResult) {
-            return {
-              ...toolInvocation,
-              state: 'result',
-              result: toolResult.result,
-            };
-          }
-
-          return toolInvocation;
-        }),
-      };
-    }
-
-    return message;
-  });
-}
-
 /**
  Check if the message is an assistant message with completed tool calls.
  The message must have at least one tool invocation and all tool invocations
  must have a result.
  */
 export function isAssistantMessageWithCompletedToolCalls(message: Message) {
+  const toolInvocationParts = message.parts?.filter(
+    part => part.type === 'tool-invocation',
+  );
   return (
     message.role === 'assistant' &&
-    message.toolInvocations &&
-    message.toolInvocations.length > 0 &&
-    message.toolInvocations.every(toolInvocation => 'result' in toolInvocation)
+    toolInvocationParts &&
+    toolInvocationParts.length > 0 &&
+    toolInvocationParts.every(part => part.toolInvocation.state === 'result')
   );
 }
 
