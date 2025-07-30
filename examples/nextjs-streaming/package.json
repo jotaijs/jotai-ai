@@ -1,0 +1,29 @@
+{
+  "name": "nextjs-streaming-example",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^1.1.12",
+    "ai": "^4.3.16",
+    "jotai": "^2.12.5",
+    "jotai-ai": "workspace:*",
+    "jotai-lazy": "^1.0.4",
+    "next": "15.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18",
+    "eslint": "^9",
+    "eslint-config-next": "15.2.0",
+    "typescript": "5.6.3"
+  }
+}
