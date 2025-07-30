@@ -44,7 +44,7 @@
     "@testing-library/user-event": "^14.5.2",
     "@types/react": "18.3.12",
     "@vitejs/plugin-react": "^4.3.3",
-    "bunchee": "4.4.8",
+    "bunchee": "^6.5.4",
     "jsdom": "^25.0.1",
     "react": "18.3.1",
     "typescript": "5.8.3",
@@ -54,6 +54,7 @@
     "@ai-sdk/provider-utils": ">=2 <3",
     "@ai-sdk/ui-utils": ">=1 <2",
     "ai": ">=4 <5",
+    "react": ">=18",
     "jotai": ">=2.5.1",
     "jotai-lazy": ">=1.0.4"
   },
