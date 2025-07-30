@@ -1,28 +1,37 @@
 import type { LanguageModelV1FinishReason } from '@ai-sdk/provider';
 import type { FetchFunction, ToolCall } from '@ai-sdk/provider-utils';
+import type {
+  ChatRequest,
+  ChatRequestOptions,
+  JSONValue,
+} from '@ai-sdk/ui-utils';
+import type { LanguageModelUsage, CreateMessage, Message, UIMessage } from 'ai';
+import type { Getter, Setter, PrimitiveAtom } from 'jotai/vanilla';
+
 import {
   callChatApi,
-  type ChatRequest,
-  type ChatRequestOptions,
-  type CreateMessage,
-  type JSONValue,
-  type Message,
+  fillMessageParts,
+  extractMaxToolInvocationStep,
+  shouldResubmitMessages,
+  isAssistantMessageWithCompletedToolCalls,
+  prepareAttachmentsForRequest,
+  getMessageParts,
+  updateToolCallResult,
 } from '@ai-sdk/ui-utils';
-import type { LanguageModelUsage, UIMessage } from 'ai';
-
-import type { Getter, PrimitiveAtom, Setter } from 'jotai/vanilla';
 
 import { atom } from 'jotai/vanilla';
+import { atomWithDefault, RESET } from 'jotai/utils';
 
-import {
-  countTrailingAssistantMessages,
-  defaultGenerateId,
-  isAssistantMessageWithCompletedToolCalls,
-} from './utils';
-
-type Body = Record<string, JSONValue>;
+import { defaultGenerateId } from './utils';
 
 type ExtraMetadata = {
+  /**
+   * Whether to send extra message fields such as `message.id` and `message.createdAt` to the API.
+   * Defaults to `false`. When set to `true`, the API endpoint might need to
+   * handle the extra fields before forwarding the request to the AI service.
+   */
+  sendExtraMessageFields?: boolean;
+
   /**
    * The credentials mode to be used for the fetch request.
    * Possible values are: 'omit', 'same-origin', 'include'.
@@ -46,6 +55,11 @@ type ExtraMetadata = {
    * ```
    */
   body?: Record<string, JSONValue>;
+};
+
+/* internal */
+type FnObj<T> = {
+  fn: T;
 };
 
 type AtomHandlers = {
@@ -101,8 +115,21 @@ export type Handlers = {
 };
 
 export type MakeChatAtomsOptions = {
-  // must be provided
-  messagesAtom: PrimitiveAtom<Message[]>;
+  // forced
+  chatIdAtom: PrimitiveAtom<string>;
+  initialMessagesAtom: PrimitiveAtom<UIMessage[]>;
+  initialInputAtom: PrimitiveAtom<string>;
+
+  /**
+   * A unique identifier for the chat. If not provided, a random one will be
+   * generated. When provided, the `useChat` hook with the same `id` will
+   * have shared states across components.
+   */
+  id?: string;
+  /**
+   * Optional function to generate a unique ID for each request and chat Id when missing.
+   */
+  generateId?: () => string;
 
   /**
    * The API endpoint that accepts a `{ messages: Message[] }` object and returns
@@ -110,23 +137,16 @@ export type MakeChatAtomsOptions = {
    */
   api?: string;
   /**
-   * A unique identifier for the chat. If not provided, a random one will be
-   * generated. When provided, the `useChat` hook with the same `id` will
-   * have shared states across components.
-   */
-  id?: string;
-
-  /**
    * Custom fetch implementation. You can use it as a middleware to intercept requests,
    * or to provide a custom fetch implementation for e.g. testing.
    */
   fetch?: FetchFunction;
+
   /**
-   *Streaming protocol that is used. Defaults to `data`.
+   * Streaming protocol that is used. Defaults to `data`.
    */
   streamProtocol?: 'data' | 'text';
 
-  generateId?: () => string;
   /**
    * Experimental (React only). When a function is provided, it will be used
    * to prepare the request body for the chat API. This can be useful for
@@ -137,16 +157,25 @@ export type MakeChatAtomsOptions = {
    * @param requestBody The request body object passed in the chat request.
    */
   experimental_prepareRequestBody?: (options: {
+    id: string;
     messages: Message[];
     requestData?: JSONValue;
     requestBody?: object;
-  }) => Record<string, JSONValue>;
+  }) => unknown;
+
+  // /**
+  //  * Custom throttle wait in ms for the chat messages and data updates.
+  //  * Default is undefined, which disables throttling.
+  //  */
+  // experimental_throttle?: number;
+
   /**
-   * Whether to send extra message fields such as `message.id` and `message.createdAt` to the API.
-   * Defaults to `false`. When set to `true`, the API endpoint might need to
-   * handle the extra fields before forwarding the request to the AI service.
+   * Keeps the last message when an error happens. This will be the default behavior
+   * starting with the next major release.
+   * The flag was introduced for backwards compatibility and currently defaults to `false`.
+   * Please enable it and update your error handling/resubmit behavior.
    */
-  sendExtraMessageFields?: boolean;
+  keepLastMessageOnError?: boolean;
 
   /**
    * Maximum number of sequential LLM calls (steps), e.g. when you use tool calls. Must be at least 1.
@@ -162,52 +191,67 @@ export type MakeChatAtomsOptions = {
 export function makeChatAtoms(opts: MakeChatAtomsOptions) {
   const api = opts.api ?? '/api/chat';
   const generateId = opts.generateId ?? defaultGenerateId;
-  const maxSteps = opts.maxSteps ?? 1;
-  const streamProtocol = opts.streamProtocol ?? 'data';
 
-  const prepareRequestBodyAtom = atom<
-    MakeChatAtomsOptions['experimental_prepareRequestBody']
-  >(opts.experimental_prepareRequestBody);
+  const { initialMessagesAtom, initialInputAtom, chatIdAtom } = opts;
 
-  const { messagesAtom } = opts;
-  const dataAtom = atom<JSONValue[] | undefined>(undefined);
+  const messagesAtom = atomWithDefault<UIMessage[]>(get =>
+    get(initialMessagesAtom),
+  );
+  const inputAtom = atomWithDefault<string>(get => get(initialInputAtom));
 
+  const streamProtocolAtom = atom(opts.streamProtocol ?? 'data');
+  const streamDataAtom = atom<JSONValue[] | undefined>(undefined);
+  /** dataAtom is deprecated to support streamDataAtom */
+  // const dataAtom = atom<JSONValue[] | undefined>(undefined);
+
+  const statusAtom = atom<'submitted' | 'streaming' | 'ready' | 'error'>(
+    'ready',
+  );
   const isLoadingAtom = atom(false);
   const errorAtom = atom<Error | undefined>(undefined);
   const abortControllerAtom = atom<AbortController | null>(null);
 
-  // const readySubmitAtom = atom(true)
-  // const isPendingAtom = atom(false)
+  const sendExtraMessageFieldsAtom = atom(opts.sendExtraMessageFields ?? true);
+  const credentialsAtom = atom(opts.credentials);
+  const headersAtom = atom(opts.headers);
+  const bodyAtom = atom(opts.body);
+  const prepareRequestBodyAtom = atom<
+    FnObj<MakeChatAtomsOptions['experimental_prepareRequestBody']>
+  >({ fn: opts.experimental_prepareRequestBody });
 
-  const onFinishAtom = atom<Handlers['onFinish']>(opts.onFinish);
-  const onResponseAtom = atom<Handlers['onResponse']>(opts.onResponse);
-  const onToolCallAtom = atom<Handlers['onToolCall']>(opts.onToolCall);
-  const onErrorAtom = atom<Handlers['onError']>(opts.onError);
+  const maxStepsAtom = atom(opts.maxSteps ?? 1);
+  const keepLastMessageonErrorAtom = atom(opts.keepLastMessageOnError ?? false);
 
-  // fetch: opts.fetch,
-  // streamProtocol: opts.streamProtocol,
-
-  const metadataAtom = atom<ExtraMetadata>({
-    credentials: opts.credentials,
-    headers: opts.headers,
-    body: opts.body,
+  const onFinishAtom = atom<FnObj<Handlers['onFinish']>>({
+    fn: opts.onFinish,
+  });
+  const onResponseAtom = atom<FnObj<Handlers['onResponse']>>({
+    fn: opts.onResponse,
+  });
+  const onToolCallAtom = atom<FnObj<Handlers['onToolCall']>>({
+    fn: opts.onToolCall,
+  });
+  const onErrorAtom = atom<FnObj<Handlers['onError']>>({
+    fn: opts.onError,
   });
 
   const processResponseStream = async (
     get: Getter,
     set: Setter,
-    chatRequest: ChatRequest,
-  ): Promise<
-    | Message
-    | {
-        messages: Message[];
-        data: JSONValue[];
-      }
-  > => {
-    // Do an optimistic update to the chat state to show the updated messages immediately:
-    set(messagesAtom, chatRequest.messages);
+    {
+      chatRequest,
+      prevUIMessages,
+      requestType = 'generate',
+    }: {
+      chatRequest: ChatRequest;
+      prevUIMessages: UIMessage[];
+      requestType: 'generate' | 'resume';
+    },
+  ): Promise<void> => {
+    const lastMessage = prevUIMessages[prevUIMessages.length - 1];
 
-    const constructedMessagesPayload = opts.sendExtraMessageFields
+    const sendExtraMessageFields = get(sendExtraMessageFieldsAtom);
+    const constructedMessagesPayload = sendExtraMessageFields
       ? chatRequest.messages
       : chatRequest.messages.map(
           ({
@@ -218,98 +262,131 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
             parts,
             annotations,
             experimental_attachments,
+            // deprecated fields. Keep for backwards compatibility.
+            data,
+            toolInvocations,
           }) => ({
             id,
             role,
             content,
             createdAt,
-            parts,
-            annotations,
-            experimental_attachments,
+            ...(parts !== undefined && { parts }),
+            ...(annotations !== undefined && { annotations }),
+            ...(experimental_attachments !== undefined && {
+              experimental_attachments,
+            }),
+            // deprecated fields. Keep for backwards compatibility.
+            ...(data !== undefined && { data }),
+            ...(toolInvocations !== undefined && { toolInvocations }),
           }),
         );
 
-    const metadata = get(metadataAtom);
-    const lastMessage = chatRequest.messages[chatRequest.messages.length - 1];
+    const chatId = get(chatIdAtom);
+    const body = get(bodyAtom);
+    const credentials = get(credentialsAtom);
+    const headers = get(headersAtom);
+    const streamProtocol = get(streamProtocolAtom);
+    const existingData = get(streamDataAtom);
+
     await callChatApi({
       api,
       abortController: () => get(abortControllerAtom),
       generateId,
       streamProtocol,
       fetch: opts.fetch,
-      // req metadata
-      body: get(prepareRequestBodyAtom)?.({
+      body: get(prepareRequestBodyAtom).fn?.({
+        id: chatId,
         messages: chatRequest.messages,
         requestData: chatRequest.data,
         requestBody: chatRequest.body,
       }) ?? {
+        id: chatId,
         messages: constructedMessagesPayload,
         data: chatRequest.data,
-        ...metadata.body,
+        ...body,
         ...chatRequest.body,
       },
       headers: {
-        ...metadata.headers,
+        ...headers,
         ...chatRequest.headers,
       },
-      credentials: metadata.credentials,
+      credentials: credentials,
       // handler
-      restoreMessagesOnFailure: () => undefined,
-      onResponse: response => get(onResponseAtom)?.(response),
+      restoreMessagesOnFailure: () => {
+        if (get(keepLastMessageonErrorAtom)) set(messagesAtom, prevUIMessages);
+      },
+      onResponse: response => get(onResponseAtom).fn?.(response),
       onFinish: (message, options) => {
         const onFinish = get(onFinishAtom);
         if (onFinish) {
-          onFinish(message, options);
+          onFinish.fn?.(message, options);
         }
       },
-      onToolCall: ({ toolCall }) => get(onToolCallAtom)?.({ toolCall }),
-      onUpdate: (options: {
+      onToolCall: ({ toolCall }) => get(onToolCallAtom).fn?.({ toolCall }),
+      onUpdate: ({
+        message,
+        data,
+        replaceLastMessage,
+      }: {
         message: UIMessage;
         data: JSONValue[] | undefined;
+        replaceLastMessage?: boolean;
       }) => {
-        set(messagesAtom, [...chatRequest.messages, options.message]);
-        set(dataAtom, existingData => [
-          ...(existingData ?? []),
-          ...(options.data ?? []),
+        set(statusAtom, 'streaming');
+        set(messagesAtom, [
+          ...(replaceLastMessage
+            ? prevUIMessages.slice(0, prevUIMessages.length - 1)
+            : prevUIMessages),
+          message,
         ]);
-      },
-      requestType: 'generate',
-      lastMessage: lastMessage && {
-        ...lastMessage,
-        parts: lastMessage.parts || [],
-      },
-    });
 
-    return {
-      messages: chatRequest.messages,
-      data: get(dataAtom) ?? [],
-    };
+        if (data && data.length > 0)
+          set(streamDataAtom, [...(existingData ?? []), ...data]);
+      },
+      requestType,
+      lastMessage,
+    });
   };
 
   const triggerRequest = async (
     get: Getter,
     set: Setter,
     chatRequest: ChatRequest,
+    requestType: 'generate' | 'resume' = 'generate',
   ) => {
+    const prevUIMessages = fillMessageParts(chatRequest.messages);
+    const messageCount = get(messagesAtom).length;
+    const maxStep = extractMaxToolInvocationStep(
+      prevUIMessages[messageCount - 1]?.toolInvocations,
+    );
+
     try {
+      set(statusAtom, 'submitted');
       set(isLoadingAtom, true);
       set(errorAtom, undefined);
 
       const abortController = new AbortController();
       set(abortControllerAtom, abortController);
 
-      await processResponseStream(get, set, chatRequest);
+      await processResponseStream(get, set, {
+        chatRequest,
+        prevUIMessages,
+        requestType,
+      });
 
       set(abortControllerAtom, null);
+      set(statusAtom, 'ready');
     } catch (error) {
       if ((error as Error).name === 'AbortError') {
-        set(abortControllerAtom, new AbortController());
+        set(abortControllerAtom, null);
+        set(statusAtom, 'ready');
         return null;
       }
 
       if (error instanceof Error) {
         set(errorAtom, error);
-        get(onErrorAtom)?.(error);
+        set(statusAtom, 'error');
+        get(onErrorAtom).fn?.(error);
       }
     } finally {
       set(isLoadingAtom, false);
@@ -317,59 +394,58 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
 
     // auto-submit when all tool calls in the last assistant message have results:
     const messages = get(messagesAtom);
-    const lastMessage = messages[messages.length - 1];
-    const messageCount = chatRequest.messages.length;
+    const maxSteps = get(maxStepsAtom);
     if (
-      // ensure we actually have new messages (to prevent infinite loops in case of errors):
-      messages.length > messageCount &&
-      // ensure there is a last message:
-      lastMessage != null &&
-      // check if the feature is enabled:
-      maxSteps > 1 &&
-      // check that next step is possible:
-      isAssistantMessageWithCompletedToolCalls(lastMessage) &&
-      // limit the number of automatic steps:
-      countTrailingAssistantMessages(messages) < maxSteps
-    ) {
-      await triggerRequest(get, set, { messages });
-    }
+      shouldResubmitMessages({
+        originalMaxToolInvocationStep: maxStep,
+        originalMessageCount: messageCount,
+        maxSteps,
+        messages,
+      })
+    )
+      await triggerRequest(get, set, { messages }, requestType);
   };
 
   const append = async (
     get: Getter,
     set: Setter,
     message: Message | CreateMessage,
-    { headers, body, data, experimental_attachments }: ChatRequestOptions = {},
-  ) => {
-    if (!message.id) {
-      message.id = generateId();
-    }
-
-    // const attachmentsForRequest = await prepareAttachmentsForRequest(
-    //   experimental_attachments,
-    // )
-
-    const messages = get(messagesAtom);
-    const chatRequest = {
-      headers: headers,
-      body: body,
-      messages: [...messages, message as Message],
+    {
+      headers,
+      body,
       data,
-      // experimental_attachments:
-      //   attachmentsForRequest.length > 0 ? attachmentsForRequest : undefined,
+      experimental_attachments = message.experimental_attachments,
+    }: ChatRequestOptions = {},
+  ) => {
+    const attachmentsForRequest = await prepareAttachmentsForRequest(
+      experimental_attachments,
+    );
+
+    const { id, createdAt, ...createMsg } = message;
+    const newMessage: Message = {
+      ...createMsg,
+      id: id ?? generateId(),
+      createdAt: createdAt ?? new Date(),
+      experimental_attachments:
+        attachmentsForRequest.length > 0 ? attachmentsForRequest : undefined,
+      parts: getMessageParts(message),
+    };
+
+    const prevMessages = get(messagesAtom);
+    const chatRequest = {
+      messages: [...prevMessages, newMessage],
+      headers,
+      body,
+      data,
     };
     return triggerRequest(get, set, chatRequest);
   };
 
-  const reload = async (
-    get: Getter,
-    set: Setter,
-    options?: ChatRequestOptions,
-  ) => {
+  const reload = (get: Getter, set: Setter, options?: ChatRequestOptions) => {
     if (get(errorAtom)) set(errorAtom, undefined);
 
     const messages = get(messagesAtom);
-    if (messages.length === 0) return null;
+    if (messages.length === 0) return;
 
     const { headers, body, data, experimental_attachments, allowEmptySubmit } =
       options ?? {};
@@ -377,8 +453,10 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
     // Remove the last assistant message and retry the last user message.
     const lastMessage = messages[messages.length - 1];
     if (lastMessage!.role === 'assistant') {
+      const lastRemovedMessages = messages.slice(0, -1);
+      set(messagesAtom, lastRemovedMessages);
       const chatRequest = {
-        messages: messages.slice(0, -1),
+        messages: lastRemovedMessages,
         headers,
         body,
         data,
@@ -401,7 +479,7 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
 
   const maybeThrowOnError = (get: Getter, set: Setter, error: Error) => {
     set(errorAtom, error);
-    const onError = get(onErrorAtom);
+    const onError = get(onErrorAtom).fn;
     if (onError) onError(error);
     else throw error;
   };
@@ -420,14 +498,11 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
       );
     },
   );
-  const reloadAtom = atom(
-    null,
-    async (get, set, options?: ChatRequestOptions) => {
-      return reload(get, set, options).catch((error: Error) =>
-        maybeThrowOnError(get, set, error),
-      );
-    },
-  );
+  const reloadAtom = atom(null, (get, set, options?: ChatRequestOptions) => {
+    return reload(get, set, options)?.catch((error: Error) =>
+      maybeThrowOnError(get, set, error),
+    );
+  });
   const stopAtom = atom(null, (get, set) => {
     const abortController = get(abortControllerAtom);
     if (abortController) {
@@ -435,20 +510,100 @@ export function makeChatAtoms(opts: MakeChatAtomsOptions) {
       set(abortControllerAtom, null);
     }
   });
+  const resumeAtom = atom(null, (get, set) => {
+    const messages = get(messagesAtom);
+
+    return triggerRequest(get, set, { messages }, 'resume');
+  });
+  const resetAtom = atom(null, (get, set) => {
+    set(messagesAtom, RESET);
+    set(inputAtom, RESET);
+
+    set(streamDataAtom, undefined);
+    set(statusAtom, 'ready');
+    set(isLoadingAtom, false);
+    set(errorAtom, undefined);
+    set(abortControllerAtom, null);
+  });
+
+  const addToolResultAtom = atom(
+    null,
+    (
+      get,
+      set,
+      {
+        toolCallId,
+        result,
+      }: {
+        toolCallId: string;
+        result: any;
+      },
+    ) => {
+      const messages = get(messagesAtom);
+      const status = get(statusAtom);
+      if (messages.length === 0) return;
+
+      updateToolCallResult({
+        messages,
+        toolCallId,
+        toolResult: result,
+      });
+
+      const updatedMessages = [
+        ...messages.slice(0, messages.length - 1),
+        // would be mutated by `updateToolCallResult`?
+        { ...messages[messages.length - 1] } as unknown as UIMessage,
+      ];
+
+      set(messagesAtom, updatedMessages);
+
+      // when the request is ongoing, the auto-submit will be triggered after the request is finished
+      if (status === 'submitted' || status === 'streaming') return;
+
+      // auto-submit when all tool calls in the last assistant message have results:
+      const lastMessage = updatedMessages[updatedMessages.length - 1];
+      if (isAssistantMessageWithCompletedToolCalls(lastMessage!)) {
+        triggerRequest(get, set, { messages: updatedMessages });
+      }
+    },
+  );
 
   return {
+    // basic abstractions
+    chatIdAtom,
+    initialInputAtom,
+    initialMessagesAtom,
+    inputAtom,
+    messagesAtom,
+    streamDataAtom,
+
+    // status flags
+    isLoadingAtom: atom(get => get(isLoadingAtom)),
+    errorAtom: atom(get => get(errorAtom)),
+    statusAtom: atom(get => get(statusAtom)),
+
+    // actions
     stopAtom,
     appendAtom,
     reloadAtom,
+    addToolResultAtom,
+    resumeAtom,
+    resetAtom,
 
-    dataAtom,
-    isLoadingAtom: atom(get => get(isLoadingAtom)),
-    errorAtom: atom(get => get(errorAtom)),
-
-    // handlers
+    // configurable handlers
     onResponseAtom,
     onFinishAtom,
     onToolCallAtom,
     onErrorAtom,
+
+    // configurable options
+    streamProtocolAtom,
+    keepLastMessageonErrorAtom,
+    maxStepsAtom,
+    sendExtraMessageFieldsAtom,
+    bodyAtom,
+    headersAtom,
+    credentialsAtom,
+    prepareRequestBodyAtom,
   };
 }

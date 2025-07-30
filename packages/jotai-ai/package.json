@@ -37,27 +37,31 @@
   "license": "MIT",
   "devDependencies": {
     "@ai-sdk/provider": "^1.1.3",
+    "@ai-sdk/react": "^1.2.12",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.0.1",
     "@testing-library/user-event": "^14.5.2",
     "@types/react": "18.3.12",
     "@vitejs/plugin-react": "^4.3.3",
-    "ai": "^4.3.16",
     "bunchee": "4.4.8",
-    "jotai": "2.12.5",
     "jsdom": "^25.0.1",
-    "prettier": "^3.3.3",
     "react": "18.3.1",
     "typescript": "5.8.3",
     "vitest": "^2.1.5"
   },
   "peerDependencies": {
-    "jotai": ">=2.5.1"
+    "@ai-sdk/provider-utils": ">=2 <3",
+    "@ai-sdk/ui-utils": ">=1 <2",
+    "ai": ">=4 <5",
+    "jotai": ">=2.5.1",
+    "jotai-lazy": ">=1.0.4"
   },
   "dependencies": {
     "@ai-sdk/provider-utils": "^2.2.8",
     "@ai-sdk/ui-utils": "^1.2.11",
+    "ai": "^4.3.16",
+    "jotai": "^2.12.5",
     "jotai-lazy": "^1.0.4"
   }
 }
