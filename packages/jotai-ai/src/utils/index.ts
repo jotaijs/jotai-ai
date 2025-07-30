@@ -1,5 +1,4 @@
 import type { Message } from '@ai-sdk/ui-utils';
-import type { CoreToolMessage } from 'ai';
 
 import { generateId as defaultGenerateId } from '@ai-sdk/ui-utils';
 
@@ -15,40 +14,6 @@ export const isPromiseLike = (
     typeof value.then === 'function'
   );
 };
-
-// Modified from https://github.com/vercel/ai-chatbot/blob/e6806aaa542c831e874681a50df39fe26c59d25e/lib/utils.ts
-export function addToolMessageToChat({
-  toolMessage,
-  messages,
-}: {
-  toolMessage: CoreToolMessage;
-  messages: Message[];
-}): Message[] {
-  return messages.map(message => {
-    if (message.toolInvocations) {
-      return {
-        ...message,
-        toolInvocations: message.toolInvocations.map(toolInvocation => {
-          const toolResult = toolMessage.content.find(
-            tool => tool.toolCallId === toolInvocation.toolCallId,
-          );
-
-          if (toolResult) {
-            return {
-              ...toolInvocation,
-              state: 'result',
-              result: toolResult.result,
-            };
-          }
-
-          return toolInvocation;
-        }),
-      };
-    }
-
-    return message;
-  });
-}
 
 /**
  Check if the message is an assistant message with completed tool calls.

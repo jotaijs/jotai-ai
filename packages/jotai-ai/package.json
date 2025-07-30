@@ -23,8 +23,7 @@
     "build": "bunchee",
     "dev": "bunchee --watch",
     "lint": "prettier --c .",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "ui-test": "vitest --config vitest.ui.config.ts"
+    "test": "vitest"
   },
   "keywords": [
     "ai",

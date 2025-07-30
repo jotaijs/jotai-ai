@@ -7,8 +7,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     includeSource: [
-      'src/**/*.ui.test.tsx',
-      // 'tests/**/*.?(c|m)[jt]s?(x)',
+      'src/**/*.ui.test.tsx'
     ],
   },
 });
