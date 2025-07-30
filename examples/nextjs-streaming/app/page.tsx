@@ -12,15 +12,24 @@ export default function Home() {
 }
 
 function ChatComponent() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
-    api: '/api/chat',
-  });
+  const { messages, input, handleInputChange, handleSubmit, isLoading, error } =
+    useChat({
+      api: '/api/chat',
+    });
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
       <h1>Jotai-AI Streaming Chat Example</h1>
-      
-      <div style={{ marginBottom: '20px', minHeight: '400px', border: '1px solid #ccc', padding: '20px', borderRadius: '8px' }}>
+
+      <div
+        style={{
+          marginBottom: '20px',
+          minHeight: '400px',
+          border: '1px solid #ccc',
+          padding: '20px',
+          borderRadius: '8px',
+        }}
+      >
         {messages.length === 0 && (
           <p style={{ color: '#666' }}>Start a conversation...</p>
         )}

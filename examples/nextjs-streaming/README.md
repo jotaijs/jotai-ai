@@ -12,17 +12,21 @@ This example demonstrates how to use jotai-ai with Next.js to create a streaming
 ## Setup
 
 1. Install dependencies:
+
    ```bash
    pnpm install
    ```
 
 2. Set up your OpenAI API key:
+
    ```bash
    cp .env.example .env.local
    ```
+
    Then edit `.env.local` and add your OpenAI API key.
 
 3. Run the development server:
+
    ```bash
    pnpm dev
    ```

@@ -1,2 +1,2 @@
-"use client"
+'use client';
 export { useChat } from './use-chat';
